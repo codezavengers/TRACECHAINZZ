@@ -29,7 +29,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Real-time Provider Health across all 10 chains
-app.get("/api/blockchain/health", async (_req, res) => {
+app.get(["/api/blockchain/health", "/api/blockchain/providers/status"], async (_req, res) => {
   try {
     const health = await checkAllProvidersHealth();
     res.json({

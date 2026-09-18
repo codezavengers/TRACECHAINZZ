@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "TraceChain - Blockchain Fraud Forensics",
+  "description": "Real-time identification of fraud-linked cryptocurrency exchanges from victim-reported suspect wallet addresses through automated blockchain analytics and VASP attribution.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
