@@ -21,7 +21,7 @@ const DEFAULT_RPC: Record<Chain, string> = {
   optimism: "https://mainnet.optimism.io",
   base: "https://mainnet.base.org",
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
-  bitcoin: "", // Must be operator configured via BITCOIN_RPC_URL
+  bitcoin: "https://mempool.space", // Public Bitcoin mainnet indexer & live telemetry
   solana: "https://api.mainnet-beta.solana.com",
   tron: "https://api.trongrid.io",
 };
@@ -67,15 +67,16 @@ export function getChainConfig(chain: Chain): ChainConfig {
 
   switch (chain) {
     case "bitcoin": {
-      const url = (env.BITCOIN_RPC_URL || env.TRACECHAIN_BTC_API_URL || "").trim();
+      const rawUrl = (env.BITCOIN_RPC_URL || env.TRACECHAIN_BTC_API_URL || "").trim();
+      const isPublicEndpoint = !rawUrl || rawUrl.includes("mempool.space") || rawUrl.includes("blockchain.info");
       return {
         chain,
         name: CHAIN_NAMES.bitcoin,
         ticker: "BTC",
-        rpcUrl: url,
+        rpcUrl: rawUrl || DEFAULT_RPC.bitcoin,
         user: env.BITCOIN_RPC_USER?.trim(),
         password: env.BITCOIN_RPC_PASSWORD?.trim(),
-        isCustomRpc: Boolean(url),
+        isCustomRpc: !isPublicEndpoint,
       };
     }
 

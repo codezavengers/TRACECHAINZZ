@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 interface IntegrationsViewProps {
-  providers: BlockchainProviderStatus[];
+  providers?: BlockchainProviderStatus[];
   vasps: VaspDirectoryEntry[];
 }
 

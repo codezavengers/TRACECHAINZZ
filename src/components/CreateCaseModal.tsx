@@ -46,8 +46,8 @@ const DEMO_SCENARIOS = [
     chain: "bitcoin" as Chain,
     reportedLossUsd: 320000,
     traceableUsd: 295000,
-    wallet: "bc1qa5wkf603fnqap32s9xuv77926s8543u08zkm5m",
-    description: "5 BTC hospital extortion payment sliced through 7 unspent change outputs towards Wasabi tumbler.",
+    wallet: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+    description: "5 BTC hospital extortion payment sliced through unspent change outputs towards mixer cluster.",
   },
   {
     id: "SCN-4",
