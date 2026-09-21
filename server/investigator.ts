@@ -12,6 +12,10 @@ import { getChainConfig } from "./config";
 let cachedHealth: { data: Record<Chain, ProviderHealth>; timestamp: number } | null = null;
 const HEALTH_CACHE_TTL_MS = 15_000; // 15s cache to prevent hammering RPCs and client aborts
 
+// In-memory probe cache for deduplication (TTL 30s)
+const probeCache = new Map<string, { response: LiveProbeResponse; timestamp: number }>();
+const PROBE_CACHE_TTL_MS = 30_000;
+
 async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: () => T): Promise<T> {
   let timer: NodeJS.Timeout;
   const timeoutPromise = new Promise<T>((resolve) => {
@@ -26,9 +30,9 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: () => T
   ]);
 }
 
-export async function checkAllProvidersHealth(): Promise<Record<Chain, ProviderHealth>> {
+export async function checkAllProvidersHealth(forceRefresh: boolean = false): Promise<Record<Chain, ProviderHealth>> {
   const now = Date.now();
-  if (cachedHealth && now - cachedHealth.timestamp < HEALTH_CACHE_TTL_MS) {
+  if (!forceRefresh && cachedHealth && now - cachedHealth.timestamp < HEALTH_CACHE_TTL_MS) {
     return cachedHealth.data;
   }
 
@@ -146,7 +150,8 @@ export function detectChainForAddress(address: string): Chain[] {
 export async function runLiveInvestigation(
   address: string,
   requestedChain?: Chain,
-  caseId: string = "CASE-LIVE"
+  caseId: string = "CASE-LIVE",
+  forceRefresh: boolean = false
 ): Promise<LiveProbeResponse> {
   const clean = address.trim();
 
@@ -158,6 +163,21 @@ export async function runLiveInvestigation(
     else if (isValidTronAddress(clean)) chain = "tron";
     else if (isValidSolanaAddress(clean)) chain = "solana";
     else if (isValidEvmAddress(clean)) chain = "ethereum";
+  }
+
+  const cacheKey = `${chain}:${clean.toLowerCase()}`;
+  const now = Date.now();
+
+  // Return cached result marked distinctly as CACHED if within TTL and not force refreshed
+  if (!forceRefresh) {
+    const hit = probeCache.get(cacheKey);
+    if (hit && now - hit.timestamp < PROBE_CACHE_TTL_MS) {
+      return {
+        ...hit.response,
+        dataSource: "CACHED",
+        provider: `${hit.response.provider} (CACHED)`,
+      };
+    }
   }
 
   // 1. Dispatch probe to chain-specific engine
@@ -197,13 +217,13 @@ export async function runLiveInvestigation(
     risk.score
   );
 
-  return {
+  const response: LiveProbeResponse = {
     address: clean,
     chain,
     isValid: partial.isValid ?? true,
     isContract,
     status: partial.status || "LIVE",
-    dataSource: partial.dataSource || "RAW_RPC",
+    dataSource: partial.dataSource || (chain === "tron" ? "LIVE_NATIVE_API" : "RAW_RPC"),
     provider: partial.provider || "Direct Blockchain Node",
     queriedAt: partial.queriedAt || new Date().toISOString(),
     balanceNative: balance,
@@ -224,4 +244,11 @@ export async function runLiveInvestigation(
     limitations: partial.limitations,
     error: partial.error,
   };
+
+  // Cache response if valid query
+  if (response.isValid && response.status !== "UNAVAILABLE") {
+    probeCache.set(cacheKey, { response, timestamp: now });
+  }
+
+  return response;
 }

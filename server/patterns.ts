@@ -178,6 +178,78 @@ export function analyzePatternsAndRisk(
     }
   }
 
+  // Check 6: Peel Chain Obfuscation Pattern (step-down sequential outflows)
+  const outgoingTxs = transactions.filter((t) => t.to.toLowerCase() !== normTarget);
+  if (outgoingTxs.length >= 3) {
+    let peelCount = 0;
+    for (let i = 0; i < outgoingTxs.length - 1; i++) {
+      const a = outgoingTxs[i].amount;
+      const b = outgoingTxs[i + 1].amount;
+      if (a > 0 && b > 0 && b < a && b >= a * 0.7) {
+        peelCount++;
+      }
+    }
+
+    if (peelCount >= 2) {
+      const evidenceHashes = outgoingTxs.slice(0, 4).map((t) => t.transactionHash);
+      patterns.push({
+        id: "pat-peel-chain",
+        name: "Peel Chain Obfuscation",
+        typology: "PEEL_CHAIN",
+        severity: "CRITICAL",
+        description: "Sequential asymmetric balance deductions with peeling tranches characteristic of automated laundering hops.",
+        confidence: 0.91,
+        evidenceTxHashes: evidenceHashes,
+        metrics: { peelSteps: peelCount },
+      });
+
+      factors.push({
+        title: "Peel Chain Step-Down Dispersion",
+        description: `Detected ${peelCount} sequential asymmetric transfer splits preserving primary stolen balance.`,
+        weight: 20,
+        supportingTxs: evidenceHashes,
+      });
+      riskScore += 20;
+      threatCategory = "Layering / Peel Chain Conduit";
+    }
+  }
+
+  // Check 7: Smurfing / Structuring Pattern (multiple near-identical or round tranches)
+  if (transactions.length >= 4) {
+    const amounts = transactions.map((t) => t.amount).filter((a) => a > 0);
+    let closePairs = 0;
+    for (let i = 0; i < amounts.length; i++) {
+      for (let j = i + 1; j < amounts.length; j++) {
+        const diff = Math.abs(amounts[i] - amounts[j]);
+        if (diff > 0 && diff <= amounts[i] * 0.05) {
+          closePairs++;
+        }
+      }
+    }
+
+    if (closePairs >= 3) {
+      const evidenceHashes = transactions.slice(0, 4).map((t) => t.transactionHash);
+      patterns.push({
+        id: "pat-structuring",
+        name: "Micro-Tranche Structuring (Smurfing)",
+        typology: "STRUCTURING_BURST",
+        severity: "HIGH",
+        description: "Multiple transactions structured within 5% value bands to evade automated threshold tripwires.",
+        confidence: 0.86,
+        evidenceTxHashes: evidenceHashes,
+        metrics: { structuredPairs: closePairs },
+      });
+
+      factors.push({
+        title: "Structured Value Tranches",
+        description: `Identified ${closePairs} transactions clustered near identical amounts to avoid reporting thresholds.`,
+        weight: 15,
+        supportingTxs: evidenceHashes,
+      });
+      riskScore += 15;
+    }
+  }
+
   // Clamp score
   riskScore = Math.min(98, Math.max(10, riskScore));
 

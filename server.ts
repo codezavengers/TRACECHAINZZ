@@ -5,9 +5,14 @@ import { createServer as createViteServer } from "vite";
 import { checkAllProvidersHealth, runLiveInvestigation, detectChainForAddress } from "./server/investigator";
 import { getAllLivePrices, getLivePrice } from "./server/price";
 import { generateCaseAiAnalysis, askAiForensicCopilot } from "./server/ai";
+import { verifyEvidenceChain } from "./server/evidence";
+import { validateStartupConfig, getStartupConfigHealth } from "./server/config";
 import type { Chain } from "./src/lib/types";
 
 dotenv.config();
+
+// Run startup configuration validation and emit stderr table
+validateStartupConfig();
 
 const app = express();
 const PORT = 3000;
@@ -25,6 +30,14 @@ app.get("/api/health", (_req, res) => {
     service: "TraceChain Autonomous Forensics Node",
     timestamp: new Date().toISOString(),
     nodeEnv: process.env.NODE_ENV || "development",
+  });
+});
+
+// Startup Config Validator health & per-chain status
+app.get("/api/config/health", (_req, res) => {
+  res.json({
+    success: true,
+    report: getStartupConfigHealth(),
   });
 });
 
@@ -48,7 +61,7 @@ app.get(["/api/blockchain/health", "/api/blockchain/providers/status"], async (_
 // Live On-Chain Address Probe
 app.post("/api/blockchain/probe", async (req, res) => {
   try {
-    const { address, chain, caseId } = req.body || {};
+    const { address, chain, caseId, forceRefresh } = req.body || {};
 
     if (!address || typeof address !== "string" || address.trim().length === 0) {
       return res.status(400).json({
@@ -58,7 +71,7 @@ app.post("/api/blockchain/probe", async (req, res) => {
     }
 
     const cleanAddress = address.trim();
-    const probe = await runLiveInvestigation(cleanAddress, chain as Chain, caseId);
+    const probe = await runLiveInvestigation(cleanAddress, chain as Chain, caseId, Boolean(forceRefresh));
 
     return res.json({
       success: true,
@@ -133,6 +146,17 @@ app.post("/api/ai/copilot", async (req, res) => {
       reply: result.reply,
       model: result.model,
     });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Verify cryptographic integrity of evidence ledger
+app.post("/api/evidence/verify", (req, res) => {
+  try {
+    const { records } = req.body || {};
+    const result = verifyEvidenceChain(records);
+    return res.json({ success: true, verification: result });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

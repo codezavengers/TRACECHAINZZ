@@ -146,27 +146,77 @@ export async function probeSolanaAddress(address: string): Promise<Partial<LiveP
     const usdValue = priceData?.usd ? balanceNative * priceData.usd : null;
     const inrValue = priceData?.inr ? balanceNative * priceData.inr : null;
 
-    // 2. Parse signatures into normalized transactions
+    // 2. Parse signatures into normalized transactions with parsed details where feasible
     const rawSigs = Array.isArray(sigsRes) ? sigsRes : [];
-    const transactions: NormalizedTransaction[] = rawSigs.map((sig) => {
+    const transactions: NormalizedTransaction[] = [];
+
+    // Parse top signatures with getTransaction
+    const sigSubset = rawSigs.slice(0, 8);
+    const parsedDetails = await Promise.allSettled(
+      sigSubset.map((sig) =>
+        callSolanaRpc<any>("getTransaction", [
+          sig.signature,
+          { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 },
+        ]).catch(() => null)
+      )
+    );
+
+    for (let i = 0; i < sigSubset.length; i++) {
+      const sig = sigSubset[i];
+      const detailRes = parsedDetails[i];
+      const detail = detailRes.status === "fulfilled" ? detailRes.value : null;
+
+      let transferAmount = 0;
+      let counterparty = "Solana Validator Network";
+      let direction: "INCOMING" | "OUTGOING" = "OUTGOING";
+
+      if (detail && detail.meta && detail.transaction?.message) {
+        const accountKeys = detail.transaction.message.accountKeys || [];
+        const preBal = detail.meta.preBalances || [];
+        const postBal = detail.meta.postBalances || [];
+        
+        // Find index of target address
+        const targetIdx = accountKeys.findIndex((k: any) => {
+          const pub = typeof k === "string" ? k : k.pubkey;
+          return pub === address;
+        });
+
+        if (targetIdx >= 0 && preBal[targetIdx] !== undefined && postBal[targetIdx] !== undefined) {
+          const diffLamports = postBal[targetIdx] - preBal[targetIdx];
+          if (diffLamports > 0) {
+            direction = "INCOMING";
+            transferAmount = diffLamports / 1e9;
+            const senderKey = accountKeys[0];
+            counterparty = typeof senderKey === "string" ? senderKey : senderKey?.pubkey || "Solana Sender";
+          } else if (diffLamports < 0) {
+            direction = "OUTGOING";
+            transferAmount = Math.abs(diffLamports) / 1e9;
+            const otherIdx = targetIdx === 0 ? 1 : 0;
+            const recKey = accountKeys[otherIdx];
+            counterparty = recKey ? (typeof recKey === "string" ? recKey : recKey?.pubkey) : "Solana Recipient";
+          }
+        }
+      }
+
       const isFailed = Boolean(sig.err);
-      return {
+      transactions.push({
         transactionHash: sig.signature,
         chain: "solana",
         blockNumber: sig.slot,
-        timestamp: sig.blockTime ? new Date(sig.blockTime * 1000).toISOString() : undefined,
-        from: address,
-        to: "Solana Program / Cluster",
+        timestamp: sig.blockTime ? new Date(sig.blockTime * 1000).toISOString() : new Date().toISOString(),
+        from: direction === "OUTGOING" ? address : counterparty,
+        to: direction === "INCOMING" ? address : counterparty,
         asset: "SOL",
-        amount: 0, // Unparsed raw signature
-        direction: "OUTGOING",
+        amount: transferAmount,
+        amountUsd: priceData?.usd && transferAmount > 0 ? transferAmount * priceData.usd : null,
+        direction,
         status: isFailed ? "FAILED" : "CONFIRMED",
         confirmations: sig.confirmationStatus === "finalized" ? 32 : 1,
         provider: "Solana Native RPC",
         dataSource: "RAW_RPC",
         fetchedAt: new Date().toISOString(),
-      };
-    });
+      });
+    }
 
     // 3. Query SPL token accounts for this wallet
     const tokens: TokenBalanceItem[] = [];

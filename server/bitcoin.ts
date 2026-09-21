@@ -3,21 +3,31 @@ import type {
   NormalizedTransaction,
   ProviderHealth,
   TokenBalanceItem,
-  FundFlowSummary,
   LiveProbeResponse,
 } from "./types";
 import { getLivePrice } from "./price";
 
+/**
+ * Validates Bitcoin address across all standard formats:
+ * - Native SegWit Bech32 (P2WPKH / P2WSH): bc1q...
+ * - Taproot Bech32m (P2TR): bc1p...
+ * - Legacy P2PKH: 1...
+ * - Pay-to-Script-Hash P2SH: 3...
+ */
 export function isValidBitcoinAddress(address: string): boolean {
   const clean = address.trim();
-  // Standard mainnet regex: legacy P2PKH (starts with 1), P2SH (starts with 3), Native SegWit Bech32 (starts with bc1)
-  return /^(?:bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(clean);
+  // Mainnet Bitcoin regex
+  return /^(?:bc1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,90}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(clean);
 }
 
-async function callBitcoinRpc<T>(method: string, params: any[] = []): Promise<T> {
+/**
+ * Direct JSON-RPC caller to Bitcoin Core node.
+ * Strictly uses standard Bitcoin Core RPC API with Basic Auth.
+ */
+export async function callBitcoinRpc<T>(method: string, params: any[] = []): Promise<T> {
   const config = getChainConfig("bitcoin");
   if (!config.rpcUrl) {
-    throw new Error("CONFIGURATION_REQUIRED: BITCOIN_RPC_URL is not configured.");
+    throw new Error("CONFIGURATION_REQUIRED: BITCOIN_RPC_URL is not configured in the environment.");
   }
 
   const headers: Record<string, string> = {
@@ -38,7 +48,7 @@ async function callBitcoinRpc<T>(method: string, params: any[] = []): Promise<T>
       method,
       params,
     }),
-    signal: AbortSignal.timeout(6000),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!res.ok) {
@@ -48,7 +58,7 @@ async function callBitcoinRpc<T>(method: string, params: any[] = []): Promise<T>
     if (res.status === 429) {
       throw new Error("RATE_LIMITED: Bitcoin Core RPC rate limit reached.");
     }
-    throw new Error(`PROVIDER_ERROR: Bitcoin RPC returned HTTP status ${res.status}`);
+    throw new Error(`PROVIDER_ERROR: Bitcoin Core RPC returned HTTP status ${res.status}`);
   }
 
   const json = await res.json();
@@ -59,166 +69,114 @@ async function callBitcoinRpc<T>(method: string, params: any[] = []): Promise<T>
   return json.result as T;
 }
 
+/**
+ * Verifies health and telemetry of the direct Bitcoin Core node.
+ * Strictly adheres to direct-node mandates. Zero third-party explorer fallbacks.
+ */
 export async function checkBitcoinHealth(): Promise<ProviderHealth> {
   const config = getChainConfig("bitcoin");
   const t0 = Date.now();
 
-  // If operator provided a custom Bitcoin Core RPC node, query it directly
-  if (config.isCustomRpc && config.rpcUrl) {
-    try {
-      const [blockchainInfo, networkInfo] = await Promise.all([
-        callBitcoinRpc<any>("getblockchaininfo"),
-        callBitcoinRpc<any>("getnetworkinfo").catch(() => null),
-      ]);
-
-      const latencyMs = Math.max(1, Date.now() - t0);
-      return {
-        chain: "bitcoin",
-        name: config.name,
-        provider: `Bitcoin Core RPC (${config.rpcUrl})`,
-        configured: true,
-        reachable: true,
-        status: "LIVE",
-        dataSource: "RAW_RPC",
-        blockHeight: blockchainInfo.blocks,
-        latestBlock: blockchainInfo.headers,
-        latencyMs,
-        fetchedAt: new Date().toISOString(),
-        gasOrFee: networkInfo?.relayfee ? `${networkInfo.relayfee} BTC/kB` : "1.0 sat/vB",
-        capabilities: {
-          nativeBalance: true,
-          tokenTransfers: false,
-          historicalSearch: false,
-          contractCode: false,
-          utxo: true,
-        },
-      };
-    } catch (err: any) {
-      // Fall through to public telemetry
-    }
+  // If BITCOIN_RPC_URL, BITCOIN_RPC_USER, or BITCOIN_RPC_PASSWORD are not configured, report CONFIGURATION_REQUIRED honestly.
+  if (!config.rpcUrl || !config.user || !config.password) {
+    return {
+      chain: "bitcoin",
+      name: config.name,
+      provider: "Bitcoin Core JSON-RPC (Unconfigured)",
+      configured: false,
+      reachable: false,
+      status: "CONFIGURATION_REQUIRED",
+      dataSource: "RAW_RPC",
+      latencyMs: 0,
+      fetchedAt: new Date().toISOString(),
+      capabilities: {
+        nativeBalance: false,
+        tokenTransfers: false,
+        historicalSearch: false,
+        contractCode: false,
+        utxo: true,
+      },
+      error: "CONFIGURATION_REQUIRED: BITCOIN_RPC_URL, BITCOIN_RPC_USER, and BITCOIN_RPC_PASSWORD are not configured. Live Bitcoin node connection requires Bitcoin Core node credentials. Third-party explorer APIs are strictly excluded from execution paths.",
+    };
   }
 
-  // Public Live Bitcoin Blockchain Analysis (mempool.space live telemetry)
+  // Query the node directly
   try {
-    const [tipRes, feeRes] = await Promise.all([
-      fetch("https://mempool.space/api/blocks/tip/height", {
-        headers: { Accept: "text/plain, application/json" },
-        signal: AbortSignal.timeout(4000),
-      }),
-      fetch("https://mempool.space/api/v1/fees/recommended", {
-        headers: { Accept: "application/json" },
-        signal: AbortSignal.timeout(4000),
-      }).catch(() => null),
+    const [blockchainInfo, networkInfo, bestHash] = await Promise.all([
+      callBitcoinRpc<any>("getblockchaininfo"),
+      callBitcoinRpc<any>("getnetworkinfo").catch(() => null),
+      callBitcoinRpc<string>("getbestblockhash").catch(() => undefined),
     ]);
 
-    if (tipRes.ok) {
-      const text = await tipRes.text();
-      const height = parseInt(text.trim(), 10);
-      const latencyMs = Math.max(1, Date.now() - t0);
-      let feeStr = "1-2 sat/vB";
-      if (feeRes && feeRes.ok) {
-        const fees = await feeRes.json();
-        if (fees?.fastestFee) {
-          feeStr = `${fees.fastestFee} sat/vB`;
-        }
-      }
+    const latencyMs = Math.max(1, Date.now() - t0);
+    const blocks = blockchainInfo.blocks || blockchainInfo.headers || 0;
+    const relayFee = networkInfo?.relayfee ? `${networkInfo.relayfee} BTC/kB` : "1.0 sat/vB";
 
-      return {
-        chain: "bitcoin",
-        name: config.name,
-        provider: "Public Bitcoin Analysis (mempool.space live telemetry)",
-        configured: true,
-        reachable: true,
-        status: "LIVE",
-        dataSource: "RAW_RPC",
-        blockHeight: height,
-        latestBlock: height,
-        latencyMs,
-        fetchedAt: new Date().toISOString(),
-        gasOrFee: feeStr,
-        capabilities: {
-          nativeBalance: true,
-          tokenTransfers: false,
-          historicalSearch: true,
-          contractCode: false,
-          utxo: true,
-        },
-      };
-    }
-  } catch {
-    // Try secondary blockchain.info
+    return {
+      chain: "bitcoin",
+      name: config.name,
+      provider: `Bitcoin Core RPC (${config.rpcUrl})`,
+      configured: true,
+      reachable: true,
+      status: "LIVE",
+      dataSource: "RAW_RPC",
+      blockHeight: blocks,
+      latestBlock: blockchainInfo.headers || blocks,
+      latencyMs,
+      fetchedAt: new Date().toISOString(),
+      gasOrFee: relayFee,
+      capabilities: {
+        nativeBalance: true,
+        tokenTransfers: false,
+        historicalSearch: true,
+        contractCode: false,
+        utxo: true,
+      },
+    };
+  } catch (err: any) {
+    const latencyMs = Math.max(1, Date.now() - t0);
+    return {
+      chain: "bitcoin",
+      name: config.name,
+      provider: `Bitcoin Core RPC (${config.rpcUrl})`,
+      configured: true,
+      reachable: false,
+      status: "UNAVAILABLE",
+      dataSource: "RAW_RPC",
+      latencyMs,
+      fetchedAt: new Date().toISOString(),
+      capabilities: {
+        nativeBalance: false,
+        tokenTransfers: false,
+        historicalSearch: false,
+        contractCode: false,
+        utxo: true,
+      },
+      error: `Bitcoin Core RPC node unreachable: ${err.message}`,
+    };
   }
-
-  // Secondary Public Fallback: blockchain.info/latestblock
-  try {
-    const res = await fetch("https://blockchain.info/latestblock", {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(3500),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const latencyMs = Math.max(1, Date.now() - t0);
-      const height = data.height || 0;
-      return {
-        chain: "bitcoin",
-        name: config.name,
-        provider: "Public Bitcoin Mainnet Node (blockchain.info)",
-        configured: true,
-        reachable: true,
-        status: "LIVE",
-        dataSource: "RAW_RPC",
-        blockHeight: height,
-        latestBlock: height,
-        latencyMs,
-        fetchedAt: new Date().toISOString(),
-        gasOrFee: "2 sat/vB",
-        capabilities: {
-          nativeBalance: true,
-          tokenTransfers: false,
-          historicalSearch: true,
-          contractCode: false,
-          utxo: true,
-        },
-      };
-    }
-  } catch {
-    // Continue
-  }
-
-  return {
-    chain: "bitcoin",
-    name: config.name,
-    provider: "Public Bitcoin Mainnet Analysis",
-    configured: true,
-    reachable: false,
-    status: "UNAVAILABLE",
-    dataSource: "RAW_RPC",
-    latencyMs: 0,
-    fetchedAt: new Date().toISOString(),
-    capabilities: {
-      nativeBalance: true,
-      tokenTransfers: false,
-      historicalSearch: false,
-      contractCode: false,
-      utxo: true,
-    },
-    error: "Public Bitcoin analysis endpoints temporarily unavailable.",
-  };
 }
 
+/**
+ * Investigates a Bitcoin address using native Bitcoin Core node RPC capabilities.
+ * Checks validity, queries UTXO set via scantxoutset if supported, inspects mempool,
+ * and formats transactions into the standard TraceChain forensic model.
+ * Zero third-party explorer dependencies.
+ */
 export async function probeBitcoinAddress(address: string): Promise<Partial<LiveProbeResponse>> {
   const config = getChainConfig("bitcoin");
-  const isValid = isValidBitcoinAddress(address);
+  const cleanAddr = address.trim();
+  const isValid = isValidBitcoinAddress(cleanAddr);
 
   if (!isValid) {
     return {
-      address,
+      address: cleanAddr,
       chain: "bitcoin",
       isValid: false,
+      isContract: false,
       status: "UNAVAILABLE",
       dataSource: "RAW_RPC",
-      provider: "Bitcoin Address Validator",
+      provider: "Bitcoin Address Syntactic Validator",
       queriedAt: new Date().toISOString(),
       balanceNative: 0,
       balanceFormatted: "0.00000000 BTC",
@@ -228,19 +186,156 @@ export async function probeBitcoinAddress(address: string): Promise<Partial<Live
       txCount: 0,
       tokens: [],
       transactions: [],
-      error: "Invalid Bitcoin address format. Supported: Bech32 (bc1...), P2PKH (1...), P2SH (3...).",
+      error: "Invalid Bitcoin address format. Expected Native SegWit Bech32 (bc1q...), Taproot Bech32m (bc1p...), Legacy P2PKH (1...), or Nested P2SH (3...).",
     };
   }
 
   const priceData = await getLivePrice("bitcoin");
 
-  // 1. If BITCOIN_RPC_URL is set, use dedicated Bitcoin Core node
-  if (config.rpcUrl) {
-    try {
+  // 1. If Bitcoin Core credentials are not configured, report CONFIGURATION_REQUIRED honestly
+  if (!config.rpcUrl || !config.user || !config.password) {
+    return {
+      address: cleanAddr,
+      chain: "bitcoin",
+      isValid: true,
+      isContract: false,
+      status: "CONFIGURATION_REQUIRED",
+      dataSource: "RAW_RPC",
+      provider: "Bitcoin Core JSON-RPC (Unconfigured)",
+      queriedAt: new Date().toISOString(),
+      balanceNative: 0,
+      balanceFormatted: "0.00000000 BTC",
+      ticker: "BTC",
+      usdValue: null,
+      inrValue: null,
+      txCount: 0,
+      tokens: [],
+      transactions: [],
+      limitations: [
+        "CONFIGURATION_REQUIRED: Set BITCOIN_RPC_URL, BITCOIN_RPC_USER, and BITCOIN_RPC_PASSWORD in .env to query a live Bitcoin Core node.",
+        "Direct-Node Forensic Architecture Mandate: Third-party explorer APIs (mempool.space, blockchain.info, Blockstream, Blockchair) are strictly excluded from execution paths.",
+        "To index arbitrary external Bitcoin address history, configure a Bitcoin Core node with -txindex=1 or scantxoutset scanning enabled.",
+      ],
+      error: "CONFIGURATION_REQUIRED: BITCOIN_RPC_USER and BITCOIN_RPC_PASSWORD are not configured. Live Bitcoin node connection requires node authentication.",
+    };
+  }
+
+  // 2. Execute direct Bitcoin Core queries
+  try {
       const blockchainInfo = await callBitcoinRpc<any>("getblockchaininfo");
+      const tipHeight = blockchainInfo.blocks || 0;
+      let balanceSats = 0;
+      let txCount = 0;
+      const transactions: NormalizedTransaction[] = [];
+      const limitations: string[] = [];
+
+      // Attempt UTXO scan via Bitcoin Core scantxoutset if available
+      try {
+        const scanRes = await callBitcoinRpc<any>("scantxoutset", [
+          "start",
+          [`addr(${cleanAddr})`],
+        ]);
+
+        if (scanRes && typeof scanRes.total_amount === "number") {
+          balanceSats = Math.round(scanRes.total_amount * 1e8);
+          txCount = scanRes.unspents?.length || 0;
+
+          if (Array.isArray(scanRes.unspents)) {
+            for (const utxo of scanRes.unspents.slice(0, 10)) {
+              transactions.push({
+                transactionHash: utxo.txid,
+                chain: "bitcoin",
+                blockNumber: utxo.height,
+                timestamp: new Date().toISOString(),
+                from: "Bitcoin Network UTXO",
+                to: cleanAddr,
+                asset: "BTC",
+                amount: utxo.amount,
+                amountUsd: priceData?.usd ? utxo.amount * priceData.usd : null,
+                direction: "INCOMING",
+                status: "CONFIRMED",
+                provider: `Bitcoin Core RPC (${config.rpcUrl})`,
+                dataSource: "RAW_RPC",
+                fetchedAt: new Date().toISOString(),
+              });
+            }
+          }
+        }
+      } catch (scanErr: any) {
+        // scantxoutset might be disabled or busy; check mempool for pending transactions
+        limitations.push(`UTXO set scan note: ${scanErr.message || "scantxoutset not enabled on target node"}.`);
+      }
+
+      // Check mempool for unconfirmed transactions involving this address
+      try {
+        const mempoolTxids = await callBitcoinRpc<string[]>("getrawmempool");
+        if (Array.isArray(mempoolTxids) && mempoolTxids.length > 0) {
+          // Inspect top 15 mempool txs for address match
+          const checkCount = Math.min(15, mempoolTxids.length);
+          for (let i = 0; i < checkCount; i++) {
+            const rawTx = await callBitcoinRpc<any>("getrawtransaction", [mempoolTxids[i], true]).catch(() => null);
+            if (rawTx) {
+              const matchedOut = rawTx.vout?.find((v: any) => v.scriptPubKey?.address === cleanAddr);
+              if (matchedOut) {
+                transactions.unshift({
+                  transactionHash: rawTx.txid,
+                  chain: "bitcoin",
+                  timestamp: new Date().toISOString(),
+                  from: "Mempool Counterparty",
+                  to: cleanAddr,
+                  asset: "BTC",
+                  amount: matchedOut.value || 0,
+                  amountUsd: priceData?.usd ? (matchedOut.value || 0) * priceData.usd : null,
+                  direction: "INCOMING",
+                  status: "PENDING",
+                  provider: `Bitcoin Core Mempool (${config.rpcUrl})`,
+                  dataSource: "RAW_RPC",
+                  fetchedAt: new Date().toISOString(),
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // Mempool inspection optional
+      }
+
+      // If neither scantxoutset nor mempool yielded data because the node lacks an address index:
+      const addressIndexAvailable = balanceSats > 0 || transactions.length > 0;
+      if (!addressIndexAvailable) {
+        return {
+          address: cleanAddr,
+          chain: "bitcoin",
+          isValid: true,
+          isContract: false,
+          status: "UNSUPPORTED_WITH_CURRENT_RPC",
+          dataSource: "RAW_RPC",
+          provider: `Bitcoin Core RPC (${config.rpcUrl})`,
+          queriedAt: new Date().toISOString(),
+          blockHeight: tipHeight,
+          balanceNative: 0,
+          balanceFormatted: "0.00000000 BTC",
+          ticker: "BTC",
+          usdValue: null,
+          inrValue: null,
+          txCount: 0,
+          tokens: [],
+          transactions: [],
+          limitations: [
+            "UNSUPPORTED_WITH_CURRENT_RPC: Bitcoin address history without explorers or an indexed node is not possible.",
+            "Required node configuration: Bitcoin Core with server=1, txindex=1, and electrs/Fulcrum or equivalent address index.",
+            "Do NOT interpret empty transaction list as lack of on-chain activity; the configured node cannot index arbitrary external addresses without an address index.",
+          ],
+          error: "UNSUPPORTED_WITH_CURRENT_RPC: Address history unavailable from this Bitcoin node. Node requires txindex=1 and electrs/Fulcrum or scantxoutset access.",
+        };
+      }
+
+      const balanceNative = balanceSats / 1e8;
+      const usdValue = priceData?.usd ? balanceNative * priceData.usd : null;
+      const inrValue = priceData?.inr ? balanceNative * priceData.inr : null;
 
       return {
-        address,
+        address: cleanAddr,
         chain: "bitcoin",
         isValid: true,
         isContract: false,
@@ -248,7 +343,29 @@ export async function probeBitcoinAddress(address: string): Promise<Partial<Live
         dataSource: "RAW_RPC",
         provider: `Bitcoin Core RPC (${config.rpcUrl})`,
         queriedAt: new Date().toISOString(),
-        blockHeight: blockchainInfo.blocks,
+        blockHeight: tipHeight,
+        balanceNative,
+        balanceFormatted: `${balanceNative.toFixed(8)} BTC`,
+        ticker: "BTC",
+        usdValue,
+        inrValue,
+        txCount: Math.max(txCount, transactions.length),
+        tokens: [],
+        transactions,
+        limitations: limitations.length > 0 ? limitations : [
+          "Direct Bitcoin Core node authenticated. Historical multi-year UTXO tracking utilizes node -txindex and scantxoutset primitives.",
+        ],
+      };
+    } catch (err: any) {
+      return {
+        address: cleanAddr,
+        chain: "bitcoin",
+        isValid: true,
+        isContract: false,
+        status: "UNAVAILABLE",
+        dataSource: "RAW_RPC",
+        provider: `Bitcoin Core RPC (${config.rpcUrl})`,
+        queriedAt: new Date().toISOString(),
         balanceNative: 0,
         balanceFormatted: "0.00000000 BTC",
         ticker: "BTC",
@@ -257,203 +374,7 @@ export async function probeBitcoinAddress(address: string): Promise<Partial<Live
         txCount: 0,
         tokens: [],
         transactions: [],
-        limitations: [
-          `Bitcoin Core node connected at block #${blockchainInfo.blocks}. Address indexing (-txindex) is required for external address history lookups on native Core.`,
-        ],
-      };
-    } catch (err: any) {
-      // Fall through to public fallback
-    }
-  }
-
-  // 2. Public Live Bitcoin Address Fetcher (mempool.space + blockchain.info)
-  try {
-    const mempoolRes = await fetch(`https://mempool.space/api/address/${encodeURIComponent(address)}`, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(4500),
-    });
-
-    if (mempoolRes.ok) {
-      const stats = await mempoolRes.json();
-      const chainStats = stats.chain_stats || {};
-      const mempoolStats = stats.mempool_stats || {};
-
-      const funded = (chainStats.funded_txo_sum || 0) + (mempoolStats.funded_txo_sum || 0);
-      const spent = (chainStats.spent_txo_sum || 0) + (mempoolStats.spent_txo_sum || 0);
-      const balanceSats = Math.max(0, funded - spent);
-      const balanceNative = balanceSats / 1e8;
-      const txCount = (chainStats.tx_count || 0) + (mempoolStats.tx_count || 0);
-
-      const usdValue = priceData?.usd ? balanceNative * priceData.usd : null;
-      const inrValue = priceData?.inr ? balanceNative * priceData.inr : null;
-
-      // Fetch recent txs for the address
-      let transactions: NormalizedTransaction[] = [];
-      try {
-        const txsRes = await fetch(`https://mempool.space/api/address/${encodeURIComponent(address)}/txs`, {
-          headers: { Accept: "application/json" },
-          signal: AbortSignal.timeout(4000),
-        });
-        if (txsRes.ok) {
-          const rawTxs = await txsRes.json();
-          if (Array.isArray(rawTxs)) {
-            transactions = rawTxs.slice(0, 10).map((t: any) => {
-              const totalOut = Array.isArray(t.vout)
-                ? t.vout.reduce((acc: number, v: any) => acc + (v.value || 0), 0)
-                : 0;
-              const amountBtc = totalOut / 1e8;
-              const txUsd = priceData?.usd ? amountBtc * priceData.usd : null;
-              const firstSender = t.vin?.[0]?.prevout?.scriptpubkey_address || "Bitcoin Network";
-              const firstRecipient = t.vout?.find((v: any) => v.scriptpubkey_address !== address)?.scriptpubkey_address || t.vout?.[0]?.scriptpubkey_address || "Bitcoin Network";
-
-              const isOutgoing = firstSender === address;
-              return {
-                transactionHash: t.txid || "unknown_hash",
-                chain: "bitcoin",
-                blockNumber: t.status?.block_height,
-                timestamp: t.status?.block_time ? new Date(t.status.block_time * 1000).toISOString() : new Date().toISOString(),
-                from: firstSender,
-                to: firstRecipient,
-                asset: "BTC",
-                amount: amountBtc,
-                amountUsd: txUsd,
-                direction: isOutgoing ? "OUTGOING" : "INCOMING",
-                fee: t.fee ? `${(t.fee / 1e8).toFixed(8)} BTC` : undefined,
-                feeFormatted: t.fee ? `${(t.fee / 1e8).toFixed(8)} BTC` : undefined,
-                status: (t.status?.confirmed ? "CONFIRMED" : "PENDING") as "CONFIRMED" | "PENDING",
-                provider: "Public Bitcoin Mainnet Node (mempool.space)",
-                dataSource: "RAW_RPC",
-                fetchedAt: new Date().toISOString(),
-              };
-            });
-          }
-        }
-      } catch {
-        // Continue with stats even if tx history times out
-      }
-
-      return {
-        address,
-        chain: "bitcoin",
-        isValid: true,
-        isContract: false,
-        status: "LIVE",
-        dataSource: "RAW_RPC",
-        provider: "Public Bitcoin Mainnet Node (mempool.space live API)",
-        queriedAt: new Date().toISOString(),
-        balanceNative,
-        balanceFormatted: `${balanceNative.toFixed(8)} BTC`,
-        ticker: "BTC",
-        usdValue,
-        inrValue,
-        txCount,
-        tokens: [],
-        transactions,
+        error: `Error querying configured Bitcoin Core node: ${err.message}`,
       };
     }
-  } catch (err: any) {
-    // Try secondary blockchain.info
-  }
-
-  // Secondary public fallback: blockchain.info
-  try {
-    const res = await fetch(`https://blockchain.info/rawaddr/${encodeURIComponent(address)}?limit=10`, {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const finalBalSats = data.final_balance ?? 0;
-      const balanceNative = finalBalSats / 1e8;
-      const txCount = data.n_tx ?? 0;
-
-      const usdValue = priceData?.usd ? balanceNative * priceData.usd : null;
-      const inrValue = priceData?.inr ? balanceNative * priceData.inr : null;
-
-      const transactions: NormalizedTransaction[] = (data.txs || []).map((t: any) => {
-        const timeIso = t.time ? new Date(t.time * 1000).toISOString() : new Date().toISOString();
-        let totalOutSats = 0;
-        let recipientAddr = "Bitcoin Network UTXO";
-
-        if (Array.isArray(t.out) && t.out.length > 0) {
-          totalOutSats = t.out.reduce((acc: number, o: any) => acc + (o.value || 0), 0);
-          const firstOutWithAddr = t.out.find((o: any) => o.addr && o.addr !== address);
-          if (firstOutWithAddr) {
-            recipientAddr = firstOutWithAddr.addr;
-          } else if (t.out[0]?.addr) {
-            recipientAddr = t.out[0].addr;
-          }
-        }
-
-        const txAmountBtc = totalOutSats / 1e8;
-        const txUsd = priceData?.usd ? txAmountBtc * priceData.usd : null;
-
-        return {
-          transactionHash: t.hash || "unknown_hash",
-          chain: "bitcoin",
-          blockNumber: t.block_height || undefined,
-          timestamp: timeIso,
-          from: address,
-          to: recipientAddr,
-          asset: "BTC",
-          amount: txAmountBtc,
-          amountUsd: txUsd,
-          direction: "OUTGOING",
-          fee: t.fee ? `${t.fee / 1e8} BTC` : undefined,
-          feeFormatted: t.fee ? `${t.fee / 1e8} BTC` : undefined,
-          status: (t.block_height ? "CONFIRMED" : "PENDING") as "CONFIRMED" | "PENDING",
-          provider: "Public Bitcoin Mainnet Node (blockchain.info)",
-          dataSource: "RAW_RPC",
-          fetchedAt: new Date().toISOString(),
-        };
-      });
-
-      return {
-        address,
-        chain: "bitcoin",
-        isValid: true,
-        isContract: false,
-        status: "LIVE",
-        dataSource: "RAW_RPC",
-        provider: "Public Bitcoin Mainnet Node (blockchain.info rawaddr)",
-        queriedAt: new Date().toISOString(),
-        blockHeight: data.txs?.[0]?.block_height,
-        balanceNative,
-        balanceFormatted: `${balanceNative.toFixed(8)} BTC`,
-        ticker: "BTC",
-        usdValue,
-        inrValue,
-        txCount,
-        tokens: [],
-        transactions,
-      };
-    }
-  } catch (err: any) {
-    console.error("Public Bitcoin lookup error:", err);
-  }
-
-  // 3. Fallback unconfigured message if public endpoint is unavailable
-  return {
-    address,
-    chain: "bitcoin",
-    isValid: true,
-    isContract: false,
-    status: "CONFIGURATION_REQUIRED",
-    dataSource: "RAW_RPC",
-    provider: "Bitcoin Core JSON-RPC (Unconfigured)",
-    queriedAt: new Date().toISOString(),
-    balanceNative: 0,
-    balanceFormatted: "0.00000000 BTC",
-    ticker: "BTC",
-    usdValue: null,
-    inrValue: null,
-    txCount: 0,
-    tokens: [],
-    transactions: [],
-    limitations: [
-      "Set BITCOIN_RPC_URL, BITCOIN_RPC_USER, and BITCOIN_RPC_PASSWORD to connect to a dedicated Bitcoin Core RPC node.",
-    ],
-    error: "Bitcoin live endpoint unavailable or unconfigured.",
-  };
 }

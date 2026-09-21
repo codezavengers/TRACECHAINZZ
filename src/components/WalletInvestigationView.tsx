@@ -22,12 +22,18 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   ShieldAlert,
+  ShieldCheck,
   FileText,
   Sparkles,
   Lock,
   Building2,
   Server,
   Info,
+  Filter,
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface WalletInvestigationViewProps {
@@ -95,10 +101,26 @@ export function WalletInvestigationView({
   const [copied, setCopied] = useState(false);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [showTestVectors, setShowTestVectors] = useState(false);
 
   const { probeAddress, isProbing } = useMultiChain();
   const [probeData, setProbeData] = useState<LiveAddressProbeResult | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
+
+  // Transaction Filters & Modal Detail State
+  const [txDirectionFilter, setTxDirectionFilter] = useState<"ALL" | "INCOMING" | "OUTGOING">("ALL");
+  const [txAssetFilter, setTxAssetFilter] = useState<string>("ALL");
+  const [txMinAmount, setTxMinAmount] = useState<string>("");
+  const [txSortBy, setTxSortBy] = useState<"timestamp" | "amount" | "block">("timestamp");
+  const [selectedTxDetail, setSelectedTxDetail] = useState<any | null>(null);
+
+  // Cryptographic Evidence Verification State
+  const [isVerifyingEvidence, setIsVerifyingEvidence] = useState(false);
+  const [evidenceVerificationResult, setEvidenceVerificationResult] = useState<{
+    valid: boolean;
+    message: string;
+    verifiedAt: string;
+  } | null>(null);
 
   // Server-side AI analysis state
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -143,19 +165,47 @@ export function WalletInvestigationView({
   const isValid = isEth || isBtc || isTron || isSol;
 
   // Trigger live on-chain lookup
-  const runAnalysis = async (addrToAnalyze?: string, chainOverride?: Chain) => {
+  const runAnalysis = async (addrToAnalyze?: string, chainOverride?: Chain, forceRefresh: boolean = false) => {
     const target = (addrToAnalyze || addressInput).trim();
     const chainToUse = chainOverride || autoDetectedChain;
     setAnalyzed(true);
     setQueryError(null);
     setAiAnalysis(null);
+    setEvidenceVerificationResult(null);
 
     try {
-      const result = await probeAddress(target, chainToUse);
+      const result = await probeAddress(target, chainToUse, "CASE-LIVE", forceRefresh);
       setProbeData(result);
     } catch (err: any) {
       console.error("Live query error:", err);
       setQueryError(err?.message || `Failed to probe address on ${chainToUse}`);
+    }
+  };
+
+  // Trigger Evidence Verification via server NIST SHA-256 validator
+  const handleVerifyEvidenceChain = async () => {
+    if (!probeData?.evidence || probeData.evidence.length === 0) return;
+    setIsVerifyingEvidence(true);
+    try {
+      const res = await fetch("/api/evidence/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: probeData.evidence }),
+      });
+      const data = await res.json();
+      setEvidenceVerificationResult({
+        valid: Boolean(data.valid),
+        message: data.message || (data.valid ? "Cryptographic custody chain intact: NIST FIPS 180-4 SHA-256 verified across all events." : "Evidence chain hash mismatch detected."),
+        verifiedAt: new Date().toLocaleTimeString(),
+      });
+    } catch (err: any) {
+      setEvidenceVerificationResult({
+        valid: false,
+        message: `Failed to verify chain: ${err.message}`,
+        verifiedAt: new Date().toLocaleTimeString(),
+      });
+    } finally {
+      setIsVerifyingEvidence(false);
     }
   };
 
@@ -192,6 +242,35 @@ export function WalletInvestigationView({
     // Initial run on load
     runAnalysis();
   }, []);
+
+  // Filtered & Sorted Transactions
+  const rawTxs = probeData?.transactions || [];
+  const uniqueAssets = Array.from(new Set(rawTxs.map((t) => t.asset).filter((a): a is string => Boolean(a))));
+
+  const filteredTransactions = rawTxs
+    .filter((tx) => {
+      if (txDirectionFilter !== "ALL" && tx.direction !== txDirectionFilter) {
+        return false;
+      }
+      if (txAssetFilter !== "ALL" && tx.asset !== txAssetFilter) {
+        return false;
+      }
+      if (txMinAmount && !isNaN(Number(txMinAmount))) {
+        if (tx.amount < Number(txMinAmount)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (txSortBy === "amount") {
+        return b.amount - a.amount;
+      }
+      if (txSortBy === "block") {
+        return (b.blockNumber || 0) - (a.blockNumber || 0);
+      }
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      return timeB - timeA;
+    });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -259,14 +338,14 @@ export function WalletInvestigationView({
             )}
 
             <button
-              onClick={() => runAnalysis()}
+              onClick={() => runAnalysis(addressInput, undefined, false)}
               disabled={isProbing}
               className="flex items-center justify-center gap-2 rounded-lg bg-amber-400 hover:bg-amber-300 px-4 py-2 text-xs font-semibold text-black transition disabled:opacity-50 active:scale-[0.99]"
             >
               {isProbing ? (
                 <>
                   <RefreshCw className="size-3.5 animate-spin" />
-                  <span>Probing Direct Node…</span>
+                  <span>Probing Node…</span>
                 </>
               ) : (
                 <>
@@ -275,34 +354,54 @@ export function WalletInvestigationView({
                 </>
               )}
             </button>
+
+            <button
+              onClick={() => runAnalysis(addressInput, undefined, true)}
+              disabled={isProbing}
+              title="Bypass 30s cache and re-query the authoritative node directly"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400/20 px-3 py-2 text-xs font-semibold text-amber-300 transition disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3.5 ${isProbing ? "animate-spin" : ""}`} />
+              <span>Re-Query</span>
+            </button>
           </div>
         </div>
 
-        {/* Quick Presets */}
-        <div className="space-y-1.5 pt-1 border-t border-white/5">
-          <div className="text-[11px] font-medium text-slate-400">
-            Quick Select Verified Live Addresses:
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {NOTABLE_PRESET_ADDRESSES.map((target) => (
-              <button
-                key={target.address}
-                onClick={() => {
-                  setAddressInput(target.address);
-                  setSelectedChain(target.chain);
-                  runAnalysis(target.address, target.chain);
-                }}
-                className={`text-[11px] px-2.5 py-1 rounded-lg border transition font-mono ${
-                  addressInput === target.address
-                    ? "border-cyan-400 bg-cyan-400/20 text-cyan-300 font-semibold"
-                    : "border-white/10 bg-black/30 text-slate-300 hover:border-cyan-400/50 hover:bg-white/5"
-                }`}
-                title={`${target.desc} (${target.address})`}
-              >
-                {target.label}
-              </button>
-            ))}
-          </div>
+        {/* Collapsible Test Vectors for Non-production testing */}
+        <div className="pt-2 border-t border-white/5 space-y-2">
+          <button
+            onClick={() => setShowTestVectors(!showTestVectors)}
+            className="flex items-center justify-between w-full text-[11px] text-slate-400 hover:text-slate-200 transition"
+          >
+            <span className="flex items-center gap-1.5">
+              <Info className="size-3 text-amber-400" />
+              <span>Reference Test Vectors (Development & Offline Validation Only)</span>
+            </span>
+            {showTestVectors ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          </button>
+
+          {showTestVectors && (
+            <div className="flex flex-wrap gap-2 pt-1 animate-in fade-in">
+              {NOTABLE_PRESET_ADDRESSES.map((target) => (
+                <button
+                  key={target.address}
+                  onClick={() => {
+                    setAddressInput(target.address);
+                    setSelectedChain(target.chain);
+                    runAnalysis(target.address, target.chain, false);
+                  }}
+                  className={`text-[11px] px-2.5 py-1 rounded-lg border transition font-mono ${
+                    addressInput === target.address
+                      ? "border-amber-400 bg-amber-400/20 text-amber-300 font-semibold"
+                      : "border-white/10 bg-black/30 text-slate-300 hover:border-amber-400/50 hover:bg-white/5"
+                  }`}
+                  title={`${target.desc} (${target.address})`}
+                >
+                  {target.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Format & Node Indicator */}
@@ -310,7 +409,7 @@ export function WalletInvestigationView({
           <div className="flex items-center gap-2">
             <span>Target Protocol:</span>
             {isValid ? (
-              <span className="font-semibold text-cyan-300 bg-cyan-400/10 border border-cyan-400/20 px-2 py-0.5 rounded capitalize">
+              <span className="font-semibold text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded capitalize">
                 ✓ {CHAIN_LABEL[autoDetectedChain]}
               </span>
             ) : (
@@ -335,8 +434,10 @@ export function WalletInvestigationView({
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold ${
                   probeData.status === "LIVE"
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                    : probeData.status === "CONFIGURATION_REQUIRED"
+                    ? probeData.dataSource === "CACHED"
+                      ? "bg-sky-500/10 text-sky-400 border border-sky-500/30"
+                      : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                    : probeData.status === "CONFIGURATION_REQUIRED" || probeData.status === "UNSUPPORTED_WITH_CURRENT_RPC"
                     ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
                     : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
                 }`}
@@ -356,6 +457,21 @@ export function WalletInvestigationView({
               <span>Queried: {new Date(probeData.queriedAt).toLocaleTimeString()}</span>
             </div>
           </div>
+
+          {/* Honest Error / Status Banner if present */}
+          {probeData.error && (
+            <div className={`rounded-xl border p-4 space-y-1.5 ${
+              probeData.status === "CONFIGURATION_REQUIRED" || probeData.status === "UNSUPPORTED_WITH_CURRENT_RPC"
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-300"
+            }`}>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>Direct Node Execution Status: {probeData.status}</span>
+              </div>
+              <p className="text-xs font-mono text-slate-300 pl-6">{probeData.error}</p>
+            </div>
+          )}
 
           {/* Limitations / Configuration Banner if present */}
           {probeData.limitations && probeData.limitations.length > 0 && (
@@ -653,21 +769,82 @@ export function WalletInvestigationView({
             </div>
           )}
 
-          {/* Normalized On-Chain Transactions Table */}
-          <div className="rounded-xl border border-white/[0.08] bg-[#0f121a] p-4 lg:p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
+          {/* Normalized On-Chain Transactions Table with Filters & Sorting */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#0f121a] p-4 lg:p-5 space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2">
                 <Activity className="size-4 text-amber-400" />
-                Verified On-Chain Transactions ({probeData.transactions.length})
-              </h3>
+                <h3 className="text-xs sm:text-sm font-semibold text-white">
+                  Verified On-Chain Transactions ({filteredTransactions.length} of {rawTxs.length})
+                </h3>
+              </div>
               <span className="text-[11px] text-slate-400 font-mono">
-                Source: {probeData.provider}
+                Source: {probeData.provider} ({probeData.dataSource})
               </span>
             </div>
 
-            {probeData.transactions.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-400 font-mono">
-                No recent transaction events found within queried block bounds or node capability.
+            {/* Filter & Sorting Controls */}
+            <div className="flex flex-wrap items-center gap-2.5 bg-black/30 p-2.5 rounded-lg border border-white/[0.05] text-xs">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <Filter className="size-3 text-amber-400" />
+                <span>Filters:</span>
+              </div>
+
+              {/* Direction Filter */}
+              <select
+                value={txDirectionFilter}
+                onChange={(e) => setTxDirectionFilter(e.target.value as any)}
+                className="rounded bg-white/5 border border-white/10 px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+              >
+                <option value="ALL">Direction: All</option>
+                <option value="INCOMING">Incoming</option>
+                <option value="OUTGOING">Outgoing</option>
+              </select>
+
+              {/* Asset Filter */}
+              {uniqueAssets.length > 1 && (
+                <select
+                  value={txAssetFilter}
+                  onChange={(e) => setTxAssetFilter(e.target.value)}
+                  className="rounded bg-white/5 border border-white/10 px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+                >
+                  <option value="ALL">Asset: All</option>
+                  {uniqueAssets.map((asset) => (
+                    <option key={asset} value={asset}>
+                      {asset}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* Min Amount */}
+              <input
+                type="number"
+                value={txMinAmount}
+                onChange={(e) => setTxMinAmount(e.target.value)}
+                placeholder="Min Amount"
+                className="w-24 rounded bg-white/5 border border-white/10 px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+              />
+
+              {/* Sorting */}
+              <div className="flex items-center gap-1.5 ml-auto text-slate-400">
+                <SlidersHorizontal className="size-3 text-amber-400" />
+                <select
+                  value={txSortBy}
+                  onChange={(e) => setTxSortBy(e.target.value as any)}
+                  className="rounded bg-white/5 border border-white/10 px-2 py-1 text-slate-200 text-xs font-mono focus:outline-none focus:border-amber-400"
+                >
+                  <option value="timestamp">Sort: Time</option>
+                  <option value="amount">Sort: Amount</option>
+                  <option value="block">Sort: Block</option>
+                </select>
+              </div>
+            </div>
+
+            {filteredTransactions.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-400 font-mono border border-dashed border-white/10 rounded-lg p-6 space-y-1">
+                <div className="text-slate-300 font-semibold">Zero Matching Transactions</div>
+                <div>No recent transaction events found within queried block bounds, filter criteria, or node capabilities.</div>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -683,8 +860,13 @@ export function WalletInvestigationView({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.04] font-mono">
-                    {probeData.transactions.map((tx) => (
-                      <tr key={tx.transactionHash} className="hover:bg-white/[0.02] transition">
+                    {filteredTransactions.map((tx) => (
+                      <tr
+                        key={tx.transactionHash}
+                        onClick={() => setSelectedTxDetail(tx)}
+                        className="hover:bg-white/[0.04] cursor-pointer transition"
+                        title="Click to view full cryptographic transaction payload"
+                      >
                         <td className="py-2.5 text-amber-300 font-medium">
                           <span title={tx.transactionHash}>
                             {shortAddr(tx.transactionHash, 8, 8)}
@@ -736,18 +918,55 @@ export function WalletInvestigationView({
             )}
           </div>
 
-          {/* Cryptographic SHA-256 Evidence Chain */}
+          {/* Cryptographic SHA-256 Evidence Chain with Live Verification */}
           {probeData.evidence && probeData.evidence.length > 0 && (
             <div className="rounded-xl border border-white/[0.08] bg-[#0f121a] p-4 lg:p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
-                  <Lock className="size-4 text-emerald-400" />
-                  Evidence Chain of Custody (Cryptographic SHA-256)
-                </h3>
-                <span className="text-[11px] text-emerald-400 font-mono">
-                  Sealed with NIST FIPS 180-4 SHA-256
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
+                    <Lock className="size-4 text-emerald-400" />
+                    Evidence Chain of Custody (NIST FIPS 180-4 SHA-256)
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Immutable forensic record hashed sequentially from raw node ingestion.
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleVerifyEvidenceChain}
+                  disabled={isVerifyingEvidence}
+                  className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition"
+                >
+                  {isVerifyingEvidence ? (
+                    <RefreshCw className="size-3.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="size-3.5" />
+                  )}
+                  <span>Verify Chain Integrity</span>
+                </button>
               </div>
+
+              {evidenceVerificationResult && (
+                <div
+                  className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-2 ${
+                    evidenceVerificationResult.valid
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                      : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {evidenceVerificationResult.valid ? (
+                      <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+                    ) : (
+                      <AlertTriangle className="size-4 shrink-0 text-rose-400" />
+                    )}
+                    <span>{evidenceVerificationResult.message}</span>
+                  </div>
+                  <span className="text-[10.5px] font-mono text-slate-400 shrink-0">
+                    Checked at {evidenceVerificationResult.verifiedAt}
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {probeData.evidence.map((item) => (
@@ -786,6 +1005,91 @@ export function WalletInvestigationView({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Transaction Detail Inspector Modal */}
+      {selectedTxDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in">
+          <div className="relative w-full max-w-xl rounded-xl border border-white/[0.1] bg-[#0f121a] p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <Activity className="size-4 text-amber-400" />
+                <h4 className="text-sm font-semibold text-white">On-Chain Transaction Payload</h4>
+              </div>
+              <button
+                onClick={() => setSelectedTxDetail(null)}
+                className="p-1 rounded text-slate-400 hover:text-white transition"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <span className="text-[11px] font-mono uppercase text-slate-400">Transaction Hash</span>
+                <div className="flex items-center justify-between bg-black/40 p-2.5 rounded border border-white/5 font-mono text-amber-300 break-all select-all">
+                  <span>{selectedTxDetail.transactionHash}</span>
+                  <button
+                    onClick={() => handleCopy(selectedTxDetail.transactionHash)}
+                    className="p-1 text-slate-400 hover:text-white shrink-0 ml-2"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-black/40 p-2.5 rounded border border-white/5 space-y-0.5">
+                  <span className="text-[11px] text-slate-400">Status</span>
+                  <div className="font-semibold text-emerald-400">{selectedTxDetail.status}</div>
+                </div>
+                <div className="bg-black/40 p-2.5 rounded border border-white/5 space-y-0.5">
+                  <span className="text-[11px] text-slate-400">Block Number</span>
+                  <div className="font-mono text-white">#{selectedTxDetail.blockNumber || "Pending"}</div>
+                </div>
+                <div className="bg-black/40 p-2.5 rounded border border-white/5 space-y-0.5">
+                  <span className="text-[11px] text-slate-400">Asset & Amount</span>
+                  <div className="font-mono text-white">
+                    {selectedTxDetail.amount} {selectedTxDetail.asset}
+                  </div>
+                </div>
+                <div className="bg-black/40 p-2.5 rounded border border-white/5 space-y-0.5">
+                  <span className="text-[11px] text-slate-400">Direction</span>
+                  <div className="font-semibold text-amber-300">{selectedTxDetail.direction}</div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-400">From Address</span>
+                <div className="font-mono text-slate-200 bg-black/40 p-2 rounded border border-white/5 break-all select-all">
+                  {selectedTxDetail.from}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-400">To Address</span>
+                <div className="font-mono text-slate-200 bg-black/40 p-2 rounded border border-white/5 break-all select-all">
+                  {selectedTxDetail.to}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-white/5 text-[11px] text-slate-400 font-mono space-y-1">
+                <div>Data Source: {selectedTxDetail.dataSource || "RAW_RPC"}</div>
+                <div>Authoritative Node: {selectedTxDetail.provider || "Direct Blockchain Node"}</div>
+                <div>Timestamp: {new Date(selectedTxDetail.timestamp).toISOString()}</div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-white/[0.08] flex justify-end">
+              <button
+                onClick={() => setSelectedTxDetail(null)}
+                className="px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition"
+              >
+                Close Inspector
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

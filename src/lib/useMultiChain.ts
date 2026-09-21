@@ -34,10 +34,10 @@ export function useMultiChain() {
   }, []);
 
   const probeAddress = useCallback(
-    async (rawAddress: string, chainHint?: Chain, caseId?: string): Promise<LiveAddressProbeResult> => {
+    async (rawAddress: string, chainHint?: Chain, caseId?: string, forceRefresh: boolean = false): Promise<LiveAddressProbeResult> => {
       setIsProbing(true);
       try {
-        return await probeLiveAddress(rawAddress, chainHint, caseId);
+        return await probeLiveAddress(rawAddress, chainHint, caseId, forceRefresh);
       } finally {
         setIsProbing(false);
       }

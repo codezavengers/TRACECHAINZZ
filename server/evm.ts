@@ -12,39 +12,64 @@ export function isValidEvmAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 }
 
+let evmReqCounter = 1;
+
+/**
+ * Direct JSON-RPC caller with automatic retry and rate-limiting detection.
+ */
 async function callEvmRpc<T>(chain: Chain, method: string, params: any[] = []): Promise<T> {
   const config = getChainConfig(chain);
   if (!config.rpcUrl) {
     throw new Error(`CONFIGURATION_REQUIRED: RPC URL not configured for ${chain}.`);
   }
 
-  const res = await fetch(config.rpcUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method,
-      params,
-    }),
-    signal: AbortSignal.timeout(6000),
-  });
+  let lastError: any = null;
+  const maxAttempts = 2;
 
-  if (!res.ok) {
-    if (res.status === 429) {
-      throw new Error(`RATE_LIMITED: ${config.name} RPC returned HTTP 429`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(config.rpcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: ++evmReqCounter,
+          method,
+          params,
+        }),
+        signal: AbortSignal.timeout(7000),
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error(`RATE_LIMITED: ${config.name} RPC returned HTTP 429`);
+        }
+        throw new Error(`PROVIDER_ERROR: ${config.name} RPC returned HTTP ${res.status}`);
+      }
+
+      const json = await res.json();
+      if (json.error) {
+        const errMsg = json.error.message || JSON.stringify(json.error);
+        if (errMsg.includes("rate limit") || errMsg.includes("too many requests")) {
+          throw new Error(`RATE_LIMITED: ${errMsg}`);
+        }
+        throw new Error(`RPC_ERROR: ${errMsg}`);
+      }
+
+      return json.result as T;
+    } catch (err: any) {
+      lastError = err;
+      if (err.message?.includes("RATE_LIMITED") || attempt === maxAttempts) {
+        break;
+      }
+      // Brief jitter before retry
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
-    throw new Error(`PROVIDER_ERROR: ${config.name} RPC returned HTTP ${res.status}`);
   }
 
-  const json = await res.json();
-  if (json.error) {
-    throw new Error(`RPC_ERROR: ${json.error.message || JSON.stringify(json.error)}`);
-  }
-
-  return json.result as T;
+  throw lastError;
 }
 
 export async function checkEvmHealth(chain: Chain): Promise<ProviderHealth> {
@@ -139,12 +164,20 @@ function decodeStringOrBytes(hex: string): string {
   }
 }
 
+// In-memory cache for ERC-20 metadata to avoid hammering RPC
+const tokenMetadataCache = new Map<string, { decimals: number; symbol: string; name: string }>();
+
 // Query ERC-20 token info (decimals, symbol, name) via eth_call
 export async function getErc20Metadata(chain: Chain, contractAddress: string): Promise<{
   decimals: number;
   symbol: string;
   name: string;
 } | null> {
+  const cacheKey = `${chain}:${contractAddress.toLowerCase()}`;
+  if (tokenMetadataCache.has(cacheKey)) {
+    return tokenMetadataCache.get(cacheKey)!;
+  }
+
   try {
     // 0x313ce567 = decimals()
     // 0x95d89b41 = symbol()
@@ -156,10 +189,12 @@ export async function getErc20Metadata(chain: Chain, contractAddress: string): P
     ]);
 
     const decimals = parseInt(decHex || "0x12", 16) || 18;
-    const symbol = decodeStringOrBytes(symHex) || "TOKEN";
+    const symbol = decodeStringOrBytes(symHex) || "ERC20";
     const name = decodeStringOrBytes(nameHex) || symbol;
 
-    return { decimals, symbol, name };
+    const result = { decimals, symbol, name };
+    tokenMetadataCache.set(cacheKey, result);
+    return result;
   } catch {
     return null;
   }
@@ -200,13 +235,81 @@ const NOTABLE_EVM_TOKENS: Partial<Record<Chain, Array<{ address: string; symbol:
   ],
 };
 
+/**
+ * Executes adaptive chunked eth_getLogs query to retrieve ERC-20 Transfer events.
+ * Handles RPC block-range constraints by dynamically reducing chunk size on error.
+ */
+async function fetchChunkedErc20Logs(
+  chain: Chain,
+  paddedAddress: string,
+  fromBlock: number,
+  toBlock: number
+): Promise<any[]> {
+  const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  let chunkSize = 1500;
+  const collectedLogs: any[] = [];
+
+  let curFrom = fromBlock;
+  while (curFrom <= toBlock && collectedLogs.length < 50) {
+    let curTo = Math.min(curFrom + chunkSize, toBlock);
+    const hexFrom = "0x" + curFrom.toString(16);
+    const hexTo = "0x" + curTo.toString(16);
+
+    try {
+      const [inChunk, outChunk] = await Promise.all([
+        callEvmRpc<any[]>(chain, "eth_getLogs", [
+          {
+            fromBlock: hexFrom,
+            toBlock: hexTo,
+            topics: [TRANSFER_TOPIC, null, paddedAddress],
+          },
+        ]).catch(() => []),
+        callEvmRpc<any[]>(chain, "eth_getLogs", [
+          {
+            fromBlock: hexFrom,
+            toBlock: hexTo,
+            topics: [TRANSFER_TOPIC, paddedAddress],
+          },
+        ]).catch(() => []),
+      ]);
+
+      if (Array.isArray(inChunk)) collectedLogs.push(...inChunk);
+      if (Array.isArray(outChunk)) collectedLogs.push(...outChunk);
+
+      curFrom = curTo + 1;
+    } catch (err: any) {
+      // If block range error, reduce chunk size
+      if (chunkSize > 300) {
+        chunkSize = Math.floor(chunkSize / 2);
+      } else {
+        // Skip current chunk to prevent blocking
+        curFrom = curTo + 1;
+      }
+    }
+  }
+
+  // Deduplicate by txHash + logIndex
+  const seen = new Set<string>();
+  const uniqueLogs: any[] = [];
+  for (const log of collectedLogs) {
+    const key = `${log.transactionHash}_${log.logIndex}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueLogs.push(log);
+    }
+  }
+
+  return uniqueLogs;
+}
+
 export async function probeEvmAddress(address: string, chain: Chain): Promise<Partial<LiveProbeResponse>> {
   const config = getChainConfig(chain);
-  const isValid = isValidEvmAddress(address);
+  const cleanAddr = address.trim();
+  const isValid = isValidEvmAddress(cleanAddr);
 
   if (!isValid) {
     return {
-      address,
+      address: cleanAddr,
       chain,
       isValid: false,
       status: "UNAVAILABLE",
@@ -221,19 +324,19 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
       txCount: 0,
       tokens: [],
       transactions: [],
-      error: `Invalid EVM address format: ${address}. Must be 0x followed by 40 hex characters.`,
+      error: `Invalid EVM address format: ${cleanAddr}. Must be 0x followed by 40 hex characters.`,
     };
   }
 
-  const paddedAddress = "0x000000000000000000000000" + address.toLowerCase().replace(/^0x/, "");
+  const paddedAddress = "0x000000000000000000000000" + cleanAddr.toLowerCase().replace(/^0x/, "");
   const priceData = await getLivePrice(chain);
 
   try {
-    // 1. Parallel native RPC queries
+    // 1. Parallel native RPC queries for state inspection
     const [balHex, txCountHex, codeHex, blockHex] = await Promise.all([
-      callEvmRpc<string>(chain, "eth_getBalance", [address, "latest"]),
-      callEvmRpc<string>(chain, "eth_getTransactionCount", [address, "latest"]),
-      callEvmRpc<string>(chain, "eth_getCode", [address, "latest"]),
+      callEvmRpc<string>(chain, "eth_getBalance", [cleanAddr, "latest"]),
+      callEvmRpc<string>(chain, "eth_getTransactionCount", [cleanAddr, "latest"]),
+      callEvmRpc<string>(chain, "eth_getCode", [cleanAddr, "latest"]),
       callEvmRpc<string>(chain, "eth_blockNumber", []),
     ]);
 
@@ -280,77 +383,65 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
       }
     }
 
-    // 3. Search recent Transfer logs via native eth_getLogs (bounded block range, e.g. recent 3,000 blocks)
-    // Transfer(address,address,uint256) topic = 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
-    const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+    // 3. Search recent Transfer logs via adaptive chunked eth_getLogs (recent 3,000 blocks)
+    const scanDepth = 3000;
+    const fromBlockNum = Math.max(0, blockHeight - scanDepth);
+    const rawLogs = await fetchChunkedErc20Logs(chain, paddedAddress, fromBlockNum, blockHeight);
+
     const transactions: NormalizedTransaction[] = [];
 
-    const fromBlockNum = Math.max(0, blockHeight - 2500);
-    const fromBlockHex = "0x" + fromBlockNum.toString(16);
+    for (const log of rawLogs.slice(0, 25)) {
+      const fromTopic = log.topics?.[1];
+      const toTopic = log.topics?.[2];
+      const fromAddr = fromTopic ? "0x" + fromTopic.slice(26) : "0x";
+      const toAddr = toTopic ? "0x" + toTopic.slice(26) : "0x";
+      const isIncoming = toAddr.toLowerCase() === cleanAddr.toLowerCase();
 
-    try {
-      const [inLogs, outLogs] = await Promise.all([
-        callEvmRpc<any[]>(chain, "eth_getLogs", [
-          {
-            fromBlock: fromBlockHex,
-            toBlock: "latest",
-            topics: [TRANSFER_TOPIC, null, paddedAddress],
-          },
-        ]).catch(() => []),
-        callEvmRpc<any[]>(chain, "eth_getLogs", [
-          {
-            fromBlock: fromBlockHex,
-            toBlock: "latest",
-            topics: [TRANSFER_TOPIC, paddedAddress],
-          },
-        ]).catch(() => []),
-      ]);
+      // Resolve token info
+      let tokenSymbol = "ERC20";
+      let decimals = 18;
 
-      const allLogs = [...(Array.isArray(inLogs) ? inLogs : []), ...(Array.isArray(outLogs) ? outLogs : [])];
-
-      for (const log of allLogs.slice(0, 20)) {
-        const fromTopic = log.topics?.[1];
-        const toTopic = log.topics?.[2];
-        const fromAddr = fromTopic ? "0x" + fromTopic.slice(26) : "0x";
-        const toAddr = toTopic ? "0x" + toTopic.slice(26) : "0x";
-        const isIncoming = toAddr.toLowerCase() === address.toLowerCase();
-
-        // Find token info or fallback
-        const matched = notableTokens.find((t) => t.address.toLowerCase() === log.address.toLowerCase());
-        const decimals = matched?.decimals || 18;
-        const symbol = matched?.symbol || "ERC-20";
-
-        let rawAmount = 0;
-        try {
-          rawAmount = Number(BigInt(log.data || "0x0")) / Math.pow(10, decimals);
-        } catch {
-          rawAmount = 0;
+      const matched = notableTokens.find((t) => t.address.toLowerCase() === log.address.toLowerCase());
+      if (matched) {
+        tokenSymbol = matched.symbol;
+        decimals = matched.decimals;
+      } else {
+        const meta = await getErc20Metadata(chain, log.address);
+        if (meta) {
+          tokenSymbol = meta.symbol;
+          decimals = meta.decimals;
         }
-
-        transactions.push({
-          transactionHash: log.transactionHash,
-          chain,
-          blockNumber: parseInt(log.blockNumber, 16),
-          from: fromAddr,
-          to: toAddr,
-          asset: symbol,
-          tokenAddress: log.address,
-          tokenSymbol: symbol,
-          amount: rawAmount,
-          amountUsd: symbol.includes("USD") ? rawAmount : null,
-          direction: isIncoming ? "INCOMING" : "OUTGOING",
-          status: "CONFIRMED",
-          provider: `${config.name} JSON-RPC`,
-          dataSource: "RAW_RPC",
-          fetchedAt: new Date().toISOString(),
-        });
       }
-    } catch {
-      // Bounded logs query reached RPC range limit - graceful degradation
+
+      let rawAmount = 0;
+      try {
+        rawAmount = Number(BigInt(log.data || "0x0")) / Math.pow(10, decimals);
+      } catch {
+        rawAmount = 0;
+      }
+
+      transactions.push({
+        transactionHash: log.transactionHash,
+        chain,
+        blockNumber: parseInt(log.blockNumber, 16),
+        timestamp: new Date().toISOString(),
+        from: fromAddr,
+        to: toAddr,
+        asset: tokenSymbol,
+        tokenAddress: log.address,
+        tokenSymbol,
+        amount: rawAmount,
+        amountUsd: tokenSymbol.includes("USD") ? rawAmount : null,
+        direction: isIncoming ? "INCOMING" : "OUTGOING",
+        status: "CONFIRMED",
+        provider: `${config.name} JSON-RPC`,
+        dataSource: "RAW_RPC",
+        fetchedAt: new Date().toISOString(),
+      });
     }
 
     return {
-      address,
+      address: cleanAddr,
       chain,
       isValid: true,
       isContract,
@@ -368,8 +459,9 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
       tokens,
       transactions,
       limitations: [
-        `Direct JSON-RPC connection to ${config.name} verified (Block #${blockHeight}).`,
-        "Recent ERC-20 event log queries are bounded to recent blocks to conform with public node rate and gas limits.",
+        `Direct JSON-RPC connection to ${config.name} verified at block #${blockHeight}.`,
+        `Recent ERC-20 event log scan covered blocks #${fromBlockNum} to #${blockHeight} via native eth_getLogs.`,
+        "Historical multi-year searches beyond public node limits require an archival node endpoint.",
       ],
     };
   } catch (err: any) {
@@ -377,7 +469,7 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
     const isTimeout = err.name === "TimeoutError" || err.message?.includes("timeout");
 
     return {
-      address,
+      address: cleanAddr,
       chain,
       isValid: true,
       isContract: false,
@@ -396,7 +488,7 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
       error: `RPC error on ${config.name}: ${err.message}`,
       limitations: [
         `RPC query to ${config.rpcUrl} failed: ${err.message}`,
-        "Please verify network connectivity or configure a dedicated archive node in your environment.",
+        "Please verify network connectivity or configure a dedicated node in your environment.",
       ],
     };
   }

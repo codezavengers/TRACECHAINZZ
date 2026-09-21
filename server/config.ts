@@ -21,9 +21,9 @@ const DEFAULT_RPC: Record<Chain, string> = {
   optimism: "https://mainnet.optimism.io",
   base: "https://mainnet.base.org",
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
-  bitcoin: "https://mempool.space", // Public Bitcoin mainnet indexer & live telemetry
+  bitcoin: "", // Direct Bitcoin Core JSON-RPC (configured via BITCOIN_RPC_URL)
   solana: "https://api.mainnet-beta.solana.com",
-  tron: "https://api.trongrid.io",
+  tron: "https://api.trongrid.io/jsonrpc",
 };
 
 export const EVM_CHAIN_IDS: Partial<Record<Chain, number>> = {
@@ -62,21 +62,198 @@ export const CHAIN_NAMES: Record<Chain, string> = {
   tron: "TRON Mainnet",
 };
 
+export const FORBIDDEN_EXPLORER_DOMAINS = [
+  "mempool.space",
+  "blockstream.info",
+  "blockchain.info",
+  "blockchair.com",
+  "etherscan.io",
+  "bscscan.com",
+  "polygonscan.com",
+  "arbiscan.io",
+  "optimistic.etherscan.io",
+  "basescan.org",
+  "snowtrace.io",
+  "tronscan.org",
+  "solscan.io",
+];
+
+export interface ChainStartupStatus {
+  chain: Chain;
+  name: string;
+  configured: boolean;
+  sourceDomain: string;
+  capabilities: string;
+  status: "LIVE_CONFIGURED" | "CONFIGURATION_REQUIRED" | "FORBIDDEN_DOMAIN";
+  rpcUrlMasked: string;
+}
+
+export interface StartupConfigReport {
+  timestamp: string;
+  totalChains: number;
+  configuredCount: number;
+  overallStatus: "OPTIMAL" | "PARTIAL" | "MINIMAL";
+  chains: Record<Chain, ChainStartupStatus>;
+}
+
+let cachedStartupReport: StartupConfigReport | null = null;
+
+export function validateStartupConfig(): StartupConfigReport {
+  const allChains: Chain[] = [
+    "ethereum",
+    "polygon",
+    "bsc",
+    "arbitrum",
+    "optimism",
+    "base",
+    "avalanche",
+    "bitcoin",
+    "solana",
+    "tron",
+  ];
+
+  const reportChains: Record<Chain, ChainStartupStatus> = {} as any;
+  let configuredCount = 0;
+
+  for (const c of allChains) {
+    const config = getChainConfig(c);
+    const rawUrl = config.rpcUrl;
+
+    // Check for forbidden explorer domains
+    const isForbidden = FORBIDDEN_EXPLORER_DOMAINS.some((domain) =>
+      rawUrl.toLowerCase().includes(domain)
+    );
+
+    if (isForbidden) {
+      process.stderr.write(
+        `\n[FATAL CONFIGURATION ERROR] Chain ${c.toUpperCase()} RPC URL points to forbidden explorer domain: ${rawUrl}. Direct-node architecture requires standard JSON-RPC endpoints, not block explorers.\n\n`
+      );
+    }
+
+    let sourceDomain = "none";
+    let rpcUrlMasked = "Not configured";
+
+    if (rawUrl) {
+      try {
+        const parsed = new URL(rawUrl);
+        sourceDomain = parsed.hostname;
+        rpcUrlMasked = `${parsed.protocol}//${parsed.hostname}${parsed.pathname ? parsed.pathname.slice(0, 15) : ""}`;
+      } catch {
+        sourceDomain = "raw-endpoint";
+        rpcUrlMasked = rawUrl.slice(0, 30);
+      }
+    }
+
+    let capabilities = "nativeBalance, tokenTransfers, historicalLogs";
+    if (c === "bitcoin") {
+      capabilities = "utxo, nativeBalance (with txindex/scantxoutset)";
+    } else if (c === "solana") {
+      capabilities = "nativeBalance, splTokens, signatureHistory";
+    } else if (c === "tron") {
+      capabilities = "nativeBalance, trc20, contractEvents";
+    }
+
+    let status: ChainStartupStatus["status"] = "LIVE_CONFIGURED";
+    if (isForbidden) {
+      status = "FORBIDDEN_DOMAIN";
+    } else if (!rawUrl || (c === "bitcoin" && (!config.user || !config.password))) {
+      status = "CONFIGURATION_REQUIRED";
+    } else {
+      configuredCount++;
+    }
+
+    reportChains[c] = {
+      chain: c,
+      name: config.name,
+      configured: status === "LIVE_CONFIGURED",
+      sourceDomain,
+      capabilities,
+      status,
+      rpcUrlMasked,
+    };
+  }
+
+  // Print formatted per-chain table to stderr
+  const pad = (str: string, len: number) => str.padEnd(len).slice(0, len);
+  const border = `+${"-".repeat(14)}+${"-".repeat(15)}+${"-".repeat(34)}+${"-".repeat(46)}+${"-".repeat(26)}+`;
+  const header = `| ${pad("Chain", 12)} | ${pad("Configured?", 13)} | ${pad("Source Domain", 32)} | ${pad("Capabilities", 44)} | ${pad("Status", 24)} |`;
+
+  const lines = [
+    "",
+    "=================================================================================================================================",
+    "                                      TRACECHAIN FORENSIC NODE STARTUP CONFIGURATION VALIDATOR                                  ",
+    "=================================================================================================================================",
+    border,
+    header,
+    border,
+  ];
+
+  for (const c of allChains) {
+    const item = reportChains[c];
+    lines.push(
+      `| ${pad(item.name, 12)} | ${pad(item.configured ? "YES" : "NO", 13)} | ${pad(item.sourceDomain, 32)} | ${pad(item.capabilities, 44)} | ${pad(item.status, 24)} |`
+    );
+  }
+
+  lines.push(border);
+  lines.push(
+    `Total Chains: ${allChains.length} | Configured & Authenticated: ${configuredCount}/${allChains.length} | Native Direct-Node Mandate: ENFORCED`
+  );
+  lines.push(
+    "=================================================================================================================================\n"
+  );
+
+  process.stderr.write(lines.join("\n"));
+
+  const overallStatus: StartupConfigReport["overallStatus"] =
+    configuredCount >= 9 ? "OPTIMAL" : configuredCount >= 5 ? "PARTIAL" : "MINIMAL";
+
+  cachedStartupReport = {
+    timestamp: new Date().toISOString(),
+    totalChains: allChains.length,
+    configuredCount,
+    overallStatus,
+    chains: reportChains,
+  };
+
+  return cachedStartupReport;
+}
+
+export function getStartupConfigHealth(): StartupConfigReport {
+  if (!cachedStartupReport) {
+    return validateStartupConfig();
+  }
+  return cachedStartupReport;
+}
+
 export function getChainConfig(chain: Chain): ChainConfig {
   const env = process.env;
 
+  // Function to reject block explorer URLs that are not direct JSON-RPC nodes
+  const sanitizeRpcUrl = (url?: string): string => {
+    if (!url) return "";
+    const clean = url.trim();
+    const isExplorer = FORBIDDEN_EXPLORER_DOMAINS.some((domain) => clean.includes(domain));
+    if (isExplorer) {
+      process.stderr.write(
+        `[CONFIG WARN] Rejected forbidden explorer URL: ${clean}. Explorer URLs cannot serve as authoritative node endpoints.\n`
+      );
+      return "";
+    }
+    return clean;
+  };
+
   switch (chain) {
     case "bitcoin": {
-      const rawUrl = (env.BITCOIN_RPC_URL || env.TRACECHAIN_BTC_API_URL || "").trim();
-      const isPublicEndpoint = !rawUrl || rawUrl.includes("mempool.space") || rawUrl.includes("blockchain.info");
+      const rawUrl = sanitizeRpcUrl(env.BITCOIN_RPC_URL);
       return {
         chain,
         name: CHAIN_NAMES.bitcoin,
         ticker: "BTC",
-        rpcUrl: rawUrl || DEFAULT_RPC.bitcoin,
+        rpcUrl: rawUrl,
         user: env.BITCOIN_RPC_USER?.trim(),
         password: env.BITCOIN_RPC_PASSWORD?.trim(),
-        isCustomRpc: !isPublicEndpoint,
+        isCustomRpc: Boolean(rawUrl),
       };
     }
 
@@ -176,14 +353,17 @@ export function getChainConfig(chain: Chain): ChainConfig {
     }
 
     case "tron": {
-      const url = (env.TRON_RPC_URL || env.TRACECHAIN_TRON_API_URL || "").trim();
+      let url = (env.TRON_RPC_URL || "").trim();
+      if (url && url.endsWith("trongrid.io")) {
+        url = `${url}/jsonrpc`;
+      }
       const apiKey = env.TRACECHAIN_TRON_API_KEY?.trim();
       return {
         chain,
         name: CHAIN_NAMES.tron,
         ticker: "TRX",
         rpcUrl: url || DEFAULT_RPC.tron,
-        apiKey,
+        apiKey: apiKey || undefined,
         isCustomRpc: Boolean(url),
       };
     }

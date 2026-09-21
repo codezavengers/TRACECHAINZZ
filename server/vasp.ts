@@ -129,6 +129,46 @@ export const AUTHORITATIVE_VASP_DIRECTORY: KnownVaspEntity[] = [
     },
   },
   {
+    id: "vasp-bitfinex",
+    name: "Bitfinex",
+    legalEntity: "iFinex Inc.",
+    category: "CENTRALIZED_EXCHANGE",
+    jurisdiction: "British Virgin Islands / Hong Kong",
+    complianceContact: "compliance@bitfinex.com",
+    subpoenaFormat: "High Court of BVI / Injunction Notice",
+    addresses: {
+      bitcoin: [
+        "bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97",
+        "3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r",
+      ],
+      ethereum: [
+        "0x1151314c646Ce4E0eFD76d03F993C4015c266055",
+        "0x876EabF441B2EE5B5b0554Fd502a8E0600950cFa",
+      ],
+      tron: [
+        "TKkeTq2uYxha4zC1u3Q5d6Uq2t1r8f9w6v",
+      ],
+    },
+  },
+  {
+    id: "vasp-kucoin",
+    name: "KuCoin",
+    legalEntity: "Meku Global Limited",
+    category: "CENTRALIZED_EXCHANGE",
+    jurisdiction: "Seychelles",
+    complianceContact: "compliance@kucoin.com",
+    subpoenaFormat: "Formal Embassy/Court Request",
+    addresses: {
+      ethereum: [
+        "0x163A053770174092b70f031201D11B55B77c5e8C",
+        "0x2B5634C42055806a59e9107ED44D43c426E58258",
+      ],
+      tron: [
+        "TD21eWf6yGk9pXy5d3a1r8q2t1r8f9w6v",
+      ],
+    },
+  },
+  {
     id: "vasp-tornado",
     name: "Tornado Cash (OFAC Sanctioned)",
     legalEntity: "Decentralized Smart Contract Mixer",

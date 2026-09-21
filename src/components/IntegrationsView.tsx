@@ -23,7 +23,18 @@ interface IntegrationsViewProps {
 export function IntegrationsView({ vasps }: IntegrationsViewProps) {
   const { providers: liveProviders, prices, isLoading, refreshProviders } = useMultiChain();
 
-  const chainList: Chain[] = ["bitcoin", "ethereum", "bsc", "polygon", "solana", "tron"];
+  const chainList: Chain[] = [
+    "bitcoin",
+    "ethereum",
+    "polygon",
+    "bsc",
+    "arbitrum",
+    "optimism",
+    "base",
+    "avalanche",
+    "solana",
+    "tron",
+  ];
 
   const getPriceForChain = (chain: Chain) => {
     if (!prices) return null;
@@ -31,6 +42,9 @@ export function IntegrationsView({ vasps }: IntegrationsViewProps) {
       case "bitcoin":
         return { name: "BTC", ...prices.bitcoin };
       case "ethereum":
+      case "arbitrum":
+      case "optimism":
+      case "base":
         return { name: "ETH", ...prices.ethereum };
       case "solana":
         return { name: "SOL", ...prices.solana };
@@ -40,6 +54,8 @@ export function IntegrationsView({ vasps }: IntegrationsViewProps) {
         return { name: "BNB", ...prices.binancecoin };
       case "polygon":
         return { name: "POL", ...prices.matic };
+      case "avalanche":
+        return { name: "AVAX", ...prices.avalanche };
       default:
         return null;
     }
@@ -75,10 +91,15 @@ export function IntegrationsView({ vasps }: IntegrationsViewProps) {
             <Activity className="size-4 text-amber-400" />
             Live Multi-Chain RPC Node Telemetry
           </h2>
-          <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-ping" />
-            6 / 6 Mainnet Chains Live On-Chain
-          </span>
+          {(() => {
+            const liveCount = chainList.filter((c) => liveProviders?.[c]?.status === "LIVE").length;
+            return (
+              <span className={`text-[11px] font-mono flex items-center gap-1.5 ${liveCount > 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                <span className={`size-1.5 rounded-full ${liveCount > 0 ? "bg-emerald-400 animate-ping" : "bg-amber-400"}`} />
+                {liveCount} / {chainList.length} Direct Node Chains Live
+              </span>
+            );
+          })()}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -86,41 +107,111 @@ export function IntegrationsView({ vasps }: IntegrationsViewProps) {
             const p = liveProviders?.[chain];
             const price = getPriceForChain(chain);
             const height = p?.blockHeight ?? 0;
-            const latency = p?.latencyMs ?? 145;
+            const latency = p?.latencyMs ?? 0;
             const providerName = p?.name ?? `${chain} mainnet`;
-            const endpoint = p?.providerEndpoint ?? "JSON-RPC";
+            const endpoint = p?.providerEndpoint ?? "Direct JSON-RPC";
             const gas = p?.gasOrFee;
+            const status = p?.status ?? "CONFIGURATION_REQUIRED";
+            const isLive = status === "LIVE";
+            const isConfigReq = status === "CONFIGURATION_REQUIRED";
+            const isUnsupported = status === "UNSUPPORTED_WITH_CURRENT_RPC";
+            const isRate = status === "RATE_LIMITED";
 
             return (
               <div
                 key={chain}
-                className="rounded-xl border border-white/10 bg-[#161a24] p-4.5 space-y-3 text-xs hover:border-amber-400/30 transition shadow-sm"
+                className={`rounded-xl border bg-[#161a24] p-4.5 space-y-3 text-xs transition shadow-sm ${
+                  isLive
+                    ? "border-white/10 hover:border-amber-400/30"
+                    : isConfigReq || isUnsupported
+                    ? "border-amber-500/20 bg-[#161a24]/90"
+                    : "border-rose-500/20 bg-[#161a24]/90"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="font-semibold text-white text-sm capitalize">
                       {CHAIN_LABEL[chain]}
                     </div>
-                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded font-bold border border-emerald-500/30">
-                      LIVE ON-CHAIN
+                    <span
+                      className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold border ${
+                        isLive
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                          : isConfigReq
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          : isUnsupported
+                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                          : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                      }`}
+                    >
+                      {isLive
+                        ? "LIVE ON-CHAIN"
+                        : isConfigReq
+                        ? "CONFIG REQUIRED"
+                        : isUnsupported
+                        ? "UNSUPPORTED RPC"
+                        : "OFFLINE"}
                     </span>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    <span className={`size-1.5 rounded-full bg-emerald-400 ${isLoading ? "animate-ping" : ""}`} />
-                    LIVE
+
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      isLive
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                        : isConfigReq || isUnsupported
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                        : isRate
+                        ? "bg-orange-500/20 text-orange-300 border-orange-500/30"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/30"
+                    }`}
+                  >
+                    <span
+                      className={`size-1.5 rounded-full ${
+                        isLive
+                          ? `bg-emerald-400 ${isLoading ? "animate-ping" : ""}`
+                          : isConfigReq || isUnsupported
+                          ? "bg-amber-400"
+                          : "bg-rose-400"
+                      }`}
+                    />
+                    {status}
                   </span>
                 </div>
+
+                {/* Honest limitations/error notice if not live */}
+                {!isLive && (
+                  <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-2 text-[10px] text-amber-300/90 space-y-0.5">
+                    <div className="font-semibold flex items-center gap-1">
+                      <AlertTriangle className="size-3 text-amber-400 shrink-0" />
+                      {isConfigReq
+                        ? "Node Credentials Unconfigured"
+                        : isUnsupported
+                        ? "Address Index Unsupported on Node"
+                        : "Provider Unreachable"}
+                    </div>
+                    <p className="text-slate-400 font-mono text-[9.5px]">
+                      {p?.error ||
+                        (chain === "bitcoin"
+                          ? "BITCOIN_RPC_URL, BITCOIN_RPC_USER, BITCOIN_RPC_PASSWORD required for native Core queries. Third-party explorers strictly excluded."
+                          : "Native RPC node returned non-operational telemetry.")}
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-1.5 text-slate-300 font-mono text-[11px]">
                   <div className="flex justify-between">
                     <span className="text-slate-400 font-sans">
                       {chain === "solana" ? "Current Slot:" : "Latest Block Height:"}
                     </span>
-                    <span className="text-amber-300 font-bold">#{height.toLocaleString()}</span>
+                    <span className={isLive ? "text-amber-300 font-bold" : "text-slate-500 font-normal"}>
+                      {height > 0 ? `#${height.toLocaleString()}` : "—"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400 font-sans">Round-Trip Latency:</span>
-                    <span className="text-emerald-400 font-semibold">{latency} ms</span>
+                    <span className={isLive ? "text-emerald-400 font-semibold" : "text-slate-500"}>
+                      {latency > 0 ? `${latency} ms` : "—"}
+                    </span>
                   </div>
                   {gas && (
                     <div className="flex justify-between">

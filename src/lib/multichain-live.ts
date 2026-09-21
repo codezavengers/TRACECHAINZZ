@@ -28,7 +28,12 @@ export interface LiveMarketPrices {
   tron: CryptoPrice;
   binancecoin: CryptoPrice;
   matic: CryptoPrice;
+  avalanche?: CryptoPrice;
+  arbitrum?: CryptoPrice;
+  optimism?: CryptoPrice;
+  base?: CryptoPrice;
   lastUpdated: string;
+  [key: string]: any;
 }
 
 export interface LiveProviderTelemetry {
@@ -302,7 +307,8 @@ export async function fetchLiveAllChainProviders(): Promise<Record<Chain, LivePr
 export async function probeLiveAddress(
   rawAddress: string,
   chainHint?: Chain,
-  caseId: string = "CASE-LIVE"
+  caseId: string = "CASE-LIVE",
+  forceRefresh: boolean = false
 ): Promise<LiveAddressProbeResult> {
   const addr = rawAddress.trim();
 
@@ -310,7 +316,7 @@ export async function probeLiveAddress(
     const res = await fetch("/api/blockchain/probe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address: addr, chain: chainHint, caseId }),
+      body: JSON.stringify({ address: addr, chain: chainHint, caseId, forceRefresh }),
       signal: AbortSignal.timeout(9000),
     });
 
@@ -345,14 +351,7 @@ export async function probeLiveAddress(
         inrValue: p.inrValue ?? 0,
         txCount: p.txCount,
         blockHeight: p.blockHeight,
-        explorerUrl:
-          p.chain === "bitcoin"
-            ? `https://mempool.space/address/${addr}`
-            : p.chain === "solana"
-            ? `https://solscan.io/account/${addr}`
-            : p.chain === "tron"
-            ? `https://tronscan.org/#/address/${addr}`
-            : `https://etherscan.io/address/${addr}`,
+        explorerUrl: undefined, // Direct-Node Architecture: third-party explorers strictly excluded
         source: `${p.provider} (${p.dataSource})`,
         isLive: p.status === "LIVE",
         queriedAt: p.queriedAt,

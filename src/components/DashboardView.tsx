@@ -82,6 +82,9 @@ export function DashboardView({
       case "bitcoin":
         return { symbol: "BTC", ...prices.bitcoin };
       case "ethereum":
+      case "arbitrum":
+      case "optimism":
+      case "base":
         return { symbol: "ETH", ...prices.ethereum };
       case "solana":
         return { symbol: "SOL", ...prices.solana };
@@ -91,6 +94,8 @@ export function DashboardView({
         return { symbol: "BNB", ...prices.binancecoin };
       case "polygon":
         return { symbol: "POL", ...prices.matic };
+      case "avalanche":
+        return { symbol: "AVAX", ...prices.avalanche };
       default:
         return null;
     }
@@ -203,10 +208,33 @@ export function DashboardView({
                 <h2 className="text-sm font-semibold text-white tracking-tight">
                   Live Multi-Chain Blockchain Telemetry & Spot Valuation
                 </h2>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <span className={`size-1.5 rounded-full bg-emerald-400 ${(btcLoading || mcLoading) ? "animate-ping" : ""}`} />
-                  RPC ONLINE
-                </span>
+                {(() => {
+                  const isCurLive = currentProvider?.status === "LIVE";
+                  const isCurConfigReq = currentProvider?.status === "CONFIGURATION_REQUIRED";
+                  const isCurUnsupported = currentProvider?.status === "UNSUPPORTED_WITH_CURRENT_RPC";
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                        isCurLive
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : isCurConfigReq || isCurUnsupported
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      }`}
+                    >
+                      <span
+                        className={`size-1.5 rounded-full ${
+                          isCurLive
+                            ? `bg-emerald-400 ${(btcLoading || mcLoading) ? "animate-ping" : ""}`
+                            : isCurConfigReq || isCurUnsupported
+                            ? "bg-amber-400"
+                            : "bg-rose-400"
+                        }`}
+                      />
+                      {currentProvider?.status || "UNAVAILABLE"}
+                    </span>
+                  );
+                })()}
               </div>
               <p className="text-[11px] text-slate-400">
                 Direct public mainnet RPC feeds across Bitcoin, EVM, Solana, and TRON
@@ -239,7 +267,7 @@ export function DashboardView({
 
         {/* Chain Selector Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs">
-          {(["bitcoin", "ethereum", "solana", "tron", "bsc", "polygon"] as Chain[]).map((c) => {
+          {(["bitcoin", "ethereum", "polygon", "bsc", "arbitrum", "optimism", "base", "avalanche", "solana", "tron"] as Chain[]).map((c) => {
             const p = getPriceForChain(c);
             const isSel = selectedChain === c;
             return (
@@ -298,16 +326,19 @@ export function DashboardView({
               <Activity className="size-3.5 text-emerald-400" />
             </div>
             <div className="text-xl font-bold font-mono text-emerald-400">
-              #{selectedChain === "bitcoin" && btcData?.tipHeight
-                ? btcData.tipHeight.toLocaleString()
-                : (currentProvider?.blockHeight || 0).toLocaleString()}
+              {(() => {
+                const isLive = currentProvider?.status === "LIVE";
+                if (!isLive) return "—";
+                const h = selectedChain === "bitcoin" && btcData?.tipHeight ? btcData.tipHeight : (currentProvider?.blockHeight || 0);
+                return h > 0 ? `#${h.toLocaleString()}` : "—";
+              })()}
             </div>
             <div className="text-[11px] text-slate-400 truncate flex items-center gap-1 font-mono">
               <span className="text-slate-500">Latency:</span>
               <span className="text-emerald-400">
-                {selectedChain === "bitcoin" && btcData?.latencyMs
-                  ? `${btcData.latencyMs} ms`
-                  : `${currentProvider?.latencyMs || 120} ms`}
+                {currentProvider?.status === "LIVE" && currentProvider.latencyMs > 0
+                  ? `${currentProvider.latencyMs} ms`
+                  : "—"}
               </span>
             </div>
           </div>
@@ -320,14 +351,18 @@ export function DashboardView({
               <Clock className="size-3.5 text-blue-400" />
             </div>
             <div className="text-xl font-bold font-mono text-white">
-              {selectedChain === "bitcoin"
-                ? `${btcData?.mempoolCount ? btcData.mempoolCount.toLocaleString() : "79,617"} txs`
-                : (currentProvider?.gasOrFee || "Standard")}
+              {(() => {
+                if (currentProvider?.status !== "LIVE") return "Config Required";
+                if (selectedChain === "bitcoin") {
+                  return btcData?.mempoolCount ? `${btcData.mempoolCount.toLocaleString()} txs` : "Connected";
+                }
+                return currentProvider?.gasOrFee || "Standard";
+              })()}
             </div>
             <div className="text-[11px] text-slate-400 font-mono truncate">
-              {selectedChain === "bitcoin"
-                ? `~${typeof btcData?.mempoolVsize === "number" ? (btcData.mempoolVsize / 1024 / 1024).toFixed(1) : "40.8"} MB pending`
-                : (currentProvider?.providerEndpoint ? currentProvider.providerEndpoint.replace("https://", "") : "Public RPC")}
+              {currentProvider?.status === "LIVE"
+                ? (currentProvider?.providerEndpoint ? currentProvider.providerEndpoint.replace("https://", "") : "Direct RPC")
+                : (currentProvider?.error || "Requires node credentials")}
             </div>
           </div>
 
@@ -339,9 +374,23 @@ export function DashboardView({
             <div className="text-sm font-bold text-white truncate" title={currentProvider?.name}>
               {currentProvider?.name || `${CHAIN_LABEL[selectedChain]} Mainnet`}
             </div>
-            <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-emerald-400" />
-              <span>Verified Direct RPC</span>
+            <div className="text-[11px] font-mono flex items-center gap-1">
+              {currentProvider?.status === "LIVE" ? (
+                <>
+                  <span className="size-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-emerald-400">Verified Direct RPC</span>
+                </>
+              ) : currentProvider?.status === "CONFIGURATION_REQUIRED" || currentProvider?.status === "UNSUPPORTED_WITH_CURRENT_RPC" ? (
+                <>
+                  <span className="size-1.5 rounded-full bg-amber-400" />
+                  <span className="text-amber-400 font-semibold">{currentProvider?.status}</span>
+                </>
+              ) : (
+                <>
+                  <span className="size-1.5 rounded-full bg-rose-400" />
+                  <span className="text-rose-400 font-semibold">{currentProvider?.status || "UNAVAILABLE"}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
