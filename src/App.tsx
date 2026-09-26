@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { DashboardView } from "@/components/DashboardView";
 import { CasesListView } from "@/components/CasesListView";
@@ -35,19 +35,79 @@ export default function App() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [isCreateCaseOpen, setIsCreateCaseOpen] = useState(false);
 
+  // Sync data with persistent backend DB
+  useEffect(() => {
+    // 1. Fetch persistent cases
+    fetch("/api/cases", {
+      headers: { "x-user-id": currentUser.id },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.cases) && data.cases.length > 0) {
+          setCases(data.cases);
+        }
+      })
+      .catch((err) => console.warn("Failed to load cases from backend DB:", err));
+
+    // 2. Fetch persistent watchlist
+    fetch("/api/watchlist", {
+      headers: { "x-user-id": currentUser.id },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.watchlist)) {
+          setWatchlist(data.watchlist);
+        }
+      })
+      .catch((err) => console.warn("Failed to load watchlist from backend DB:", err));
+
+    // 3. Fetch persistent alerts
+    fetch("/api/alerts", {
+      headers: { "x-user-id": currentUser.id },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.alerts)) {
+          setAlerts(data.alerts);
+        }
+      })
+      .catch((err) => console.warn("Failed to load alerts from backend DB:", err));
+  }, []);
+
   const handleSelectCase = (caseId: string) => {
     setSelectedCaseId(caseId);
     setCurrentView("case-detail");
   };
 
-  const handleCreateCase = (newCase: InvestigationCase) => {
+  const handleCreateCase = async (newCase: InvestigationCase) => {
+    // Update local state immediately for instant feedback
     setCases((prev) => [newCase, ...prev]);
     setIsCreateCaseOpen(false);
     setSelectedCaseId(newCase.id);
     setCurrentView("case-detail");
+
+    // Persist to backend database
+    try {
+      const res = await fetch("/api/cases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": currentUser.id,
+        },
+        body: JSON.stringify(newCase),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.case) {
+          setCases((prev) => prev.map((c) => (c.id === newCase.id ? data.case : c)));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to persist case to backend:", err);
+    }
   };
 
-  const handleUpdateStatus = (caseId: string, newStatus: CaseStatus) => {
+  const handleUpdateStatus = async (caseId: string, newStatus: CaseStatus) => {
     setCases((prev) =>
       prev.map((c) =>
         c.id === caseId
@@ -70,33 +130,60 @@ export default function App() {
           : c
       )
     );
+
+    // Persist to backend database
+    try {
+      await fetch(`/api/cases/${caseId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": currentUser.id,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (err) {
+      console.error("Failed to update case status on backend:", err);
+    }
   };
 
-  const handleAddNote = (caseId: string, noteText: string) => {
+  const handleAddNote = async (caseId: string, noteText: string) => {
+    const newNote = {
+      id: `note-${Date.now()}`,
+      body: noteText,
+      text: noteText,
+      author: currentUser.name,
+      createdAt: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
+    };
+
     setCases((prev) =>
       prev.map((c) =>
         c.id === caseId
           ? {
               ...c,
               updatedAt: new Date().toISOString(),
-              notes: [
-                {
-                  id: `note-${Date.now()}`,
-                  body: noteText,
-                  text: noteText,
-                  author: currentUser.name,
-                  createdAt: new Date().toISOString(),
-                  timestamp: new Date().toISOString(),
-                },
-                ...c.notes,
-              ],
+              notes: [newNote, ...c.notes],
             }
           : c
       )
     );
+
+    // Persist to backend database
+    try {
+      await fetch(`/api/cases/${caseId}/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": currentUser.id,
+        },
+        body: JSON.stringify({ body: noteText }),
+      });
+    } catch (err) {
+      console.error("Failed to add note on backend:", err);
+    }
   };
 
-  const handleAddWalletToWatchlist = (
+  const handleAddWalletToWatchlist = async (
     item: Partial<WatchlistWallet> & Pick<WatchlistWallet, "address" | "chain">
   ) => {
     const newEntry: WatchlistWallet = {
@@ -115,10 +202,34 @@ export default function App() {
       notes: item.notes || "Added from investigation probe",
     };
     setWatchlist((prev) => [newEntry, ...prev]);
+
+    // Persist to backend database
+    try {
+      await fetch("/api/watchlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": currentUser.id,
+        },
+        body: JSON.stringify(newEntry),
+      });
+    } catch (err) {
+      console.error("Failed to add watchlist wallet on backend:", err);
+    }
   };
 
-  const handleRemoveWalletFromWatchlist = (id: string) => {
+  const handleRemoveWalletFromWatchlist = async (id: string) => {
     setWatchlist((prev) => prev.filter((w) => w.id !== id));
+
+    // Persist to backend database
+    try {
+      await fetch(`/api/watchlist/${id}`, {
+        method: "DELETE",
+        headers: { "x-user-id": currentUser.id },
+      });
+    } catch (err) {
+      console.error("Failed to remove watchlist wallet on backend:", err);
+    }
   };
 
   const handleOpenCreateCaseWithAddress = (addr: string, chain: Chain) => {

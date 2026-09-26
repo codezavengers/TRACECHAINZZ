@@ -12,21 +12,19 @@ import { getLivePrice } from "./price";
 const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 function decodeBase58(string: string): Buffer {
-  let bytes = [0];
+  const bytes = [0];
   for (let i = 0; i < string.length; i++) {
     const c = string[i];
     const value = ALPHABET.indexOf(c);
     if (value === -1) throw new Error("Non-base58 character");
-    for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
-    bytes[0] += value;
-    let carry = 0;
-    for (let j = 0; j < bytes.length; ++j) {
-      bytes[j] += carry;
-      carry = bytes[j] >> 8;
-      bytes[j] &= 255;
+    let carry = value;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
     }
     while (carry > 0) {
-      bytes.push(carry & 255);
+      bytes.push(carry & 0xff);
       carry >>= 8;
     }
   }

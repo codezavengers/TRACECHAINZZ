@@ -1,0 +1,1212 @@
+{
+  "users": [
+    {
+      "id": "usr-1",
+      "name": "Inspector Vikram Mehta",
+      "email": "vikram.mehta@cybercrime.gov.in",
+      "role": "INVESTIGATOR",
+      "department": "Cyber Crime Financial Investigation Unit",
+      "agency": "Delhi Police Cyber Cell / NCRP Desk",
+      "createdAt": "2026-06-28T18:43:57.340Z"
+    },
+    {
+      "id": "usr-2",
+      "name": "Dr. Anya Sharma",
+      "email": "anya.sharma@forensics.org",
+      "role": "ANALYST",
+      "department": "Blockchain Intelligence & Heuristics",
+      "agency": "National Cyber Forensics Laboratory",
+      "createdAt": "2026-07-28T18:43:57.340Z"
+    },
+    {
+      "id": "usr-3",
+      "name": "Superintendent Rajesh Rao",
+      "email": "rajesh.rao@police.gov.in",
+      "role": "ADMIN",
+      "department": "Directorate of Criminal Investigation",
+      "agency": "Central Bureau of Investigation (CBI)",
+      "createdAt": "2026-05-29T18:43:57.340Z"
+    },
+    {
+      "id": "usr-4",
+      "name": "Legal Officer Priya Nair",
+      "email": "priya.nair@prosecution.gov.in",
+      "role": "VIEWER",
+      "department": "State Prosecution Audit Cell",
+      "agency": "Directorate of Enforcement (ED)",
+      "createdAt": "2026-08-27T18:43:57.340Z"
+    }
+  ],
+  "agencies": [
+    {
+      "id": "ag-delhi-cyber",
+      "name": "Delhi Police Special Cyber Cell",
+      "code": "DP-CC",
+      "jurisdiction": "Delhi / NCT",
+      "country": "India",
+      "contactEmail": "cybercell-delhi@nic.in",
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "ag-cbi-fc",
+      "name": "Central Bureau of Investigation - Financial Crimes",
+      "code": "CBI-FC",
+      "jurisdiction": "National / Federal",
+      "country": "India",
+      "contactEmail": "cbi-economic@gov.in",
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    }
+  ],
+  "complaints": [
+    {
+      "id": "comp-1",
+      "caseId": "TC-2025-0841",
+      "complaintRef": "NCRP-2025-MH-94821",
+      "source": "NCRP",
+      "victimName": "Rohan Kapoor",
+      "victimEmail": "rohan.k@gmail.com",
+      "complaintText": "Victim was contacted via dating application and convinced to invest savings into a high-yield decentralized arbitrage pool. Initial withdrawal succeeded, following which a major deposit of 142,500 USDT was stolen and swept into mixer/burners.",
+      "lossAmount": 142500,
+      "lossCurrency": "USDT",
+      "lossUsd": 142500,
+      "reportedWallets": [
+        "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601"
+      ],
+      "reportedTxHashes": [
+        "0x9a8f276189c441503828976d22510aad0201ac7ec88293211d23dca7efae728"
+      ],
+      "chain": "ethereum",
+      "fraudTypology": "PIG_BUTCHERING",
+      "createdAt": "2026-09-25T06:43:57.340Z"
+    }
+  ],
+  "cases": [
+    {
+      "id": "TC-E2E-1790448517781",
+      "title": "E2E Pipeline Test Case",
+      "description": "Automated test",
+      "reportedWallet": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "status": "NEW",
+      "riskBand": "HIGH",
+      "riskScore": 85,
+      "priorityScore": 80,
+      "typology": "INVESTMENT_FRAUD",
+      "reportedLossUsd": 50000,
+      "traceableUsd": 48000,
+      "complaintRef": "FIR-TEST-001",
+      "complaintText": "Test complaint",
+      "investigator": "Inspector Vikram Mehta",
+      "recoveryProbability": 0.85,
+      "extractedWallets": [
+        "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601"
+      ],
+      "connectedVictims": 1,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "createdAt": "2026-09-26T18:48:37.781Z",
+      "updatedAt": "2026-09-26T18:48:37.781Z",
+      "notes": [],
+      "activity": []
+    },
+    {
+      "id": "TC-2026-8408",
+      "title": "TASK SCAM (ETHEREUM - 0x71c042...)",
+      "description": "Law enforcement investigation dossier initialized via NCRP for suspect address 0x71c0429f939e0807b1d1bc65860d5b77ecb2a601.",
+      "reportedWallet": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "status": "NEW",
+      "riskBand": "HIGH",
+      "riskScore": 85,
+      "priorityScore": 80,
+      "typology": "TASK_SCAM",
+      "reportedLossUsd": 15000,
+      "traceableUsd": 14250,
+      "complaintRef": "NCRP-2026-09-DL-0091823",
+      "complaintText": "[NCRP COMPLAINT REF: 2026/09/DL/0091823]\nComplainant: Aman Gupta (Delhi, South)\nCategory: Cyber Crime - Task Scam\nReported Loss: 50000 INR\nReported Suspect Wallets: TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA\nDetails: Task scam via telegram drained 50000 INR",
+      "investigator": "Inspector Vikram Mehta",
+      "recoveryProbability": 0.78,
+      "extractedWallets": [],
+      "connectedVictims": 1,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "victimName": "Aman Gupta",
+      "victimEmail": "aman@gmail.com",
+      "assignedTo": "Inspector Vikram Mehta",
+      "createdAt": "2026-09-26T18:46:00.925Z",
+      "updatedAt": "2026-09-26T18:46:00.925Z",
+      "notes": [
+        {
+          "id": "note-1790448360925",
+          "body": "Automated case registered from NCRP ingestion. Extracted 0 target wallet(s) using DETERMINISTIC_PARSER.",
+          "text": "Automated case registered from NCRP ingestion. Extracted 0 target wallet(s) using DETERMINISTIC_PARSER.",
+          "author": "TraceChain Intake Engine",
+          "createdAt": "2026-09-26T18:46:00.925Z",
+          "timestamp": "2026-09-26T18:46:00.925Z"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-1790448360925",
+          "action": "CASE_CREATED",
+          "detail": "Dossier TC-2026-8408 created from complaint reference NCRP-2026-09-DL-0091823",
+          "actor": "Inspector Vikram Mehta",
+          "createdAt": "2026-09-26T18:46:00.925Z",
+          "timestamp": "2026-09-26T18:46:00.925Z"
+        }
+      ]
+    },
+    {
+      "id": "TC-2025-0841",
+      "title": "Sha Zhu Pan (Pig Butchering) -> OKX Hot Deposit Gateway",
+      "description": "WhatsApp romance inducement leading to fake liquidity pool. 142,500 USDT funnelled via 2 transit burner wallets directly into OKX hot deposit.",
+      "reportedWallet": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "status": "VASP_IDENTIFIED",
+      "riskBand": "CRITICAL",
+      "riskScore": 94,
+      "priorityScore": 91,
+      "typology": "PIG_BUTCHERING",
+      "reportedLossUsd": 142500,
+      "traceableUsd": 138200,
+      "complaintRef": "NCRP-2025-MH-94821",
+      "complaintText": "Victim was contacted via dating application and convinced to invest savings into a high-yield decentralized arbitrage pool. Initial withdrawal succeeded, following which a major deposit of 142,500 USDT was stolen and swept into mixer/burners.",
+      "investigator": "Inspector Vikram Mehta",
+      "recoveryProbability": 0.88,
+      "extractedWallets": [
+        "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "0x892a019483012984029482049280492840928402",
+        "0x6cc5f688a315f3dc28a7781717a9a798a59fda7b"
+      ],
+      "connectedVictims": 1,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "victimName": "Rohan Kapoor",
+      "victimEmail": "rohan.k@gmail.com",
+      "assignedTo": "Inspector Vikram Mehta",
+      "createdAt": "2026-09-25T06:43:57.340Z",
+      "updatedAt": "2026-09-26T16:43:57.340Z",
+      "targetVasp": "OKX Exchange",
+      "freezeStatus": "SUBMITTED",
+      "notes": [
+        {
+          "id": "note-1",
+          "body": "Victim lured through fake dating profile on Tinder, redirected to malicious liquidity staking dApp.",
+          "text": "Victim lured through fake dating profile on Tinder, redirected to malicious liquidity staking dApp.",
+          "author": "Inspector Vikram Mehta",
+          "createdAt": "2026-09-25T18:43:57.340Z",
+          "timestamp": "2026-09-25T18:43:57.340Z"
+        },
+        {
+          "id": "note-2",
+          "body": "Automated heuristic detected 2 burner hops before consolidation into OKX 3 Deposit Address.",
+          "text": "Automated heuristic detected 2 burner hops before consolidation into OKX 3 Deposit Address.",
+          "author": "TRACE-AI Heuristic Engine",
+          "createdAt": "2026-09-26T12:43:57.340Z",
+          "timestamp": "2026-09-26T12:43:57.340Z"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-1",
+          "action": "CASE_CREATED",
+          "detail": "FIR NCRP-2025-MH-94821 ingested via National Cyber Crime Reporting Portal",
+          "actor": "System",
+          "createdAt": "2026-09-25T06:43:57.340Z",
+          "timestamp": "2026-09-25T06:43:57.340Z"
+        },
+        {
+          "id": "act-2",
+          "action": "AUTONOMOUS_TRACE_COMPLETED",
+          "detail": "3 hops resolved: Target -> Burner 1 -> Intermediary Splitter -> OKX Cluster Address",
+          "actor": "TraceChain Engine",
+          "createdAt": "2026-09-26T06:43:57.340Z",
+          "timestamp": "2026-09-26T06:43:57.340Z"
+        },
+        {
+          "id": "act-3",
+          "action": "ACTION_PACK_PREPARED",
+          "detail": "Section 91 CrPC Preservation Notice and Subpoena Packet generated for OKX Compliance Desk",
+          "actor": "Inspector Vikram Mehta",
+          "createdAt": "2026-09-26T16:43:57.340Z",
+          "timestamp": "2026-09-26T16:43:57.340Z"
+        }
+      ]
+    },
+    {
+      "id": "TC-2025-0792",
+      "title": "Telegram Part-Time Job Task Scam -> Binance TRC-20 Sweep",
+      "description": "Victims assigned YouTube video rating tasks and required to recharge pre-paid wallets. Over 48,000 USDT drained across 12 complaints.",
+      "reportedWallet": "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+      "chain": "tron",
+      "status": "ACTION_REQUIRED",
+      "riskBand": "CRITICAL",
+      "riskScore": 97,
+      "priorityScore": 95,
+      "typology": "TASK_SCAM",
+      "reportedLossUsd": 48000,
+      "traceableUsd": 46500,
+      "complaintRef": "NCRP-2025-DL-11029",
+      "complaintText": "Telegram channel 'Alpha Media Review Task' promised 3000 INR per task. Victims forced to transfer USDT to activate VIP withdrawal tiers.",
+      "investigator": "Dr. Anya Sharma",
+      "recoveryProbability": 0.92,
+      "extractedWallets": [
+        "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+        "TMuA6YqfCeX8EhbfYEg5y7S4D1Dc2M4K8A"
+      ],
+      "connectedVictims": 12,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "victimName": "Pooja Deshmukh & 11 Others",
+      "victimEmail": "pooja.d@gmail.com",
+      "assignedTo": "Dr. Anya Sharma",
+      "createdAt": "2026-09-24T18:43:57.340Z",
+      "updatedAt": "2026-09-26T14:43:57.340Z",
+      "targetVasp": "Binance Global",
+      "freezeStatus": "NOT_REQUESTED",
+      "notes": [
+        {
+          "id": "note-3",
+          "body": "Direct sweep pattern to Binance Hot Deposit Address confirmed on TRON mainnet.",
+          "text": "Direct sweep pattern to Binance Hot Deposit Address confirmed on TRON mainnet.",
+          "author": "Dr. Anya Sharma",
+          "createdAt": "2026-09-26T08:43:57.340Z",
+          "timestamp": "2026-09-26T08:43:57.340Z"
+        }
+      ],
+      "activity": [
+        {
+          "id": "act-4",
+          "action": "CASE_CREATED",
+          "detail": "FIR NCRP-2025-DL-11029 ingested",
+          "actor": "System",
+          "createdAt": "2026-09-24T18:43:57.340Z",
+          "timestamp": "2026-09-24T18:43:57.340Z"
+        }
+      ]
+    },
+    {
+      "id": "TC-2025-0619",
+      "title": "Healthcare Ransomware Extortion -> Bitcoin Peel Chain -> Mixer",
+      "description": "Hospital network encrypted by LockBit 3.0 variant. Ransom paid in BTC; funds undergoing systematic peeling toward CoinJoin / Wasabi privacy clusters.",
+      "reportedWallet": "bc1qa5wkgaew2dkv56kfvj49j0av5nqvrl529w46dn",
+      "chain": "bitcoin",
+      "status": "TRACING",
+      "riskBand": "HIGH",
+      "riskScore": 89,
+      "priorityScore": 84,
+      "typology": "RANSOMWARE",
+      "reportedLossUsd": 320000,
+      "traceableUsd": 285000,
+      "complaintRef": "CBI-CYBER-2025-0042",
+      "complaintText": "Multi-specialty hospital management server locked with .lockbit extension. 5.2 BTC extortion payment sent from corporate treasury wallet.",
+      "investigator": "Inspector Vikram Mehta",
+      "recoveryProbability": 0.65,
+      "extractedWallets": [
+        "bc1qa5wkgaew2dkv56kfvj49j0av5nqvrl529w46dn",
+        "bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97"
+      ],
+      "connectedVictims": 1,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "victimName": "Apex Healthcare Ltd.",
+      "assignedTo": "Inspector Vikram Mehta",
+      "createdAt": "2026-09-23T18:43:57.340Z",
+      "updatedAt": "2026-09-26T06:43:57.340Z",
+      "targetVasp": "Unidentified Wasabi Mixer Cluster",
+      "freezeStatus": "NOT_REQUESTED",
+      "notes": [],
+      "activity": []
+    },
+    {
+      "id": "TC-2025-0550",
+      "title": "Permit2 Phishing Signature Drainer -> Cross-Chain Bridge Hopping",
+      "description": "Malicious Google Search ad mimicking Uniswap frontend tricked victim into signing off-chain Permit2 typed approval. $87,200 drained and bridged to Avalanche.",
+      "reportedWallet": "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7",
+      "chain": "polygon",
+      "status": "ANALYZING",
+      "riskBand": "HIGH",
+      "riskScore": 82,
+      "priorityScore": 78,
+      "typology": "MALWARE_DRAINER",
+      "reportedLossUsd": 87200,
+      "traceableUsd": 84000,
+      "complaintRef": "NCRP-2025-KA-38104",
+      "complaintText": "Victim clicked sponsored search result for Uniswap and connected MetaMask. Within 1 block, 87,200 USDC was transferred without gas fees via Permit2 signature.",
+      "investigator": "Dr. Anya Sharma",
+      "recoveryProbability": 0.72,
+      "extractedWallets": [
+        "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7",
+        "0x3304e22ddaa22bdda6fe3a598c257b49466e31b6"
+      ],
+      "connectedVictims": 1,
+      "provenance": "LIVE_BLOCKCHAIN_DATA",
+      "victimName": "Vikrant Patil",
+      "victimEmail": "vikrant.patil@outlook.com",
+      "assignedTo": "Dr. Anya Sharma",
+      "createdAt": "2026-09-22T18:43:57.340Z",
+      "updatedAt": "2026-09-26T00:43:57.340Z",
+      "targetVasp": "Stargate Cross-Chain Router",
+      "freezeStatus": "NOT_REQUESTED",
+      "notes": [],
+      "activity": []
+    }
+  ],
+  "wallets": [],
+  "walletClusters": [],
+  "transactions": [],
+  "tokenTransfers": [],
+  "investigations": [
+    {
+      "id": "inv-TC-PROBE-muiqpl9p",
+      "caseId": "TC-PROBE",
+      "targetAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "maxDepth": 2,
+      "minValue": 0,
+      "direction": "OUTGOING",
+      "status": "COMPLETED",
+      "discoveredHops": 0,
+      "discoveredWallets": 1,
+      "discoveredTxs": 0,
+      "riskScore": 15,
+      "startedAt": "2026-09-26T18:45:35.341Z",
+      "completedAt": "2026-09-26T18:45:37.893Z",
+      "investigator": "Inspector Vikram Mehta"
+    }
+  ],
+  "investigationPaths": [],
+  "vasps": [
+    {
+      "id": "vasp-binance",
+      "name": "Binance Global",
+      "legalEntity": "Binance Holdings Ltd.",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "Multiple (Cayman / UAE / France / El Salvador)",
+      "complianceRating": "A- (Responsive to LE Portal)",
+      "kycStandard": "Strict Tier-2 Biometric ID",
+      "responseLatencyHours": 4,
+      "registeredFiu": true,
+      "contactEmail": "compliance-le@binance.com",
+      "subpoenaFormat": "Kodak Law Enforcement Portal (LEP)",
+      "subpoenaPortal": "https://www.binance.com/en/support/law-enforcement",
+      "cooperationLevel": "HIGH",
+      "avgFreezeTimeHours": 6,
+      "knownAddresses": {
+        "bitcoin": [
+          "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo",
+          "3M219KR5vEneNb47ewrPfWyb5jQ2DjxRP6",
+          "bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h"
+        ],
+        "ethereum": [
+          "0x28c6c06298d514db089934071355e5743bf21d60",
+          "0x21a31ee1afc51d94c2efccaa2092ad1028285549",
+          "0xdfd5293d8e347dfee59e53b244454e7e60397e7b",
+          "0x56ed60771dc35d397a82c3d433fee70ba46b084a",
+          "0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"
+        ],
+        "bsc": [
+          "0x8894e0a0c962cb723c1976a4421c95949be2d4e3",
+          "0x0d0707963952f2fba59dd06f2b425ace40b492fe"
+        ],
+        "tron": [
+          "TMuA6YqfCeX8EhbfYEg5y7S4D1Dc2M4K8A",
+          "TNPeeaaTKeh22mvYfsWhVKbZGDTQWer5KA"
+        ],
+        "solana": [
+          "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+          "2ojv9BAiHUrvsm9gxDe7fJSzbNZSJcxZvf8dqmWGHG8S"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-okx",
+      "name": "OKX Exchange",
+      "legalEntity": "Aux Cayes FinTech Co. Ltd",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "Seychelles / Bahamas / UAE",
+      "complianceRating": "B+ (Requires Verified Official Email)",
+      "kycStandard": "Tier-2 KYC / Liveness Detection",
+      "responseLatencyHours": 8,
+      "registeredFiu": true,
+      "contactEmail": "law-enforcement@okx.com",
+      "subpoenaFormat": "Secured PDF Directive / INTERPOL Notice",
+      "cooperationLevel": "HIGH",
+      "avgFreezeTimeHours": 12,
+      "knownAddresses": {
+        "ethereum": [
+          "0x6cC5F688a30d379E122c5992b855295cf643bd69",
+          "0xa7efae728d2936e78bda97dc267687568dd593f3",
+          "0x5a21b3f940268ec3802e3b3a6e9a8f276189c441"
+        ],
+        "tron": [
+          "TMc6HdQ649B2mF3kL48p6tUuD2bQ8a1Z5y"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-kraken",
+      "name": "Kraken (Payward)",
+      "legalEntity": "Payward Inc.",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "United States (FinCEN / state licenses)",
+      "complianceRating": "A+ (US Court & MLAT Responsive)",
+      "kycStandard": "FinCEN Tier-3 Comprehensive",
+      "responseLatencyHours": 2,
+      "registeredFiu": true,
+      "contactEmail": "subpoenas@kraken.com",
+      "subpoenaFormat": "18 U.S.C. § 981 / 2703(d) Orders",
+      "cooperationLevel": "HIGH",
+      "avgFreezeTimeHours": 4,
+      "knownAddresses": {
+        "bitcoin": [
+          "bc1qx9t2l3pymy2svxwhq5ph72x0pksq25nd52u243"
+        ],
+        "ethereum": [
+          "0x2910543af39aba0cd09dbb2d50200b3e800a63d2",
+          "0x0a869d79a7052c7f1b55a8ebabbea3420f0d1e13"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-coinbase",
+      "name": "Coinbase Global",
+      "legalEntity": "Coinbase Inc.",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "United States (Delaware / NY DFS)",
+      "complianceRating": "A+ (Direct LE Portal / 24x7)",
+      "kycStandard": "US Strict FinCEN Tier-3",
+      "responseLatencyHours": 3,
+      "registeredFiu": true,
+      "contactEmail": "law-enforcement-requests@coinbase.com",
+      "subpoenaFormat": "Federal Subpoena / LE Portal",
+      "cooperationLevel": "HIGH",
+      "avgFreezeTimeHours": 5,
+      "knownAddresses": {
+        "bitcoin": [
+          "bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97"
+        ],
+        "ethereum": [
+          "0x71660c4005ba85c37ccec55d0c4493e66fe775d3",
+          "0x503828976d22510aad0201ac7ec88293211d23dc",
+          "0xddfabcdc4d8ffc6d5beaf154f18b778f892a0740"
+        ],
+        "base": [
+          "0x3304e22ddaa22bdda6fe3a598c257b49466e31b6"
+        ],
+        "solana": [
+          "H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-coindcx",
+      "name": "CoinDCX (Neblio Technologies)",
+      "legalEntity": "Neblio Technologies Pvt. Ltd.",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "India (FIU-IND Registered / PMLA Compliant)",
+      "complianceRating": "A (Dedicated Indian Law Enforcement Desk)",
+      "kycStandard": "Aadhaar / PAN Strict e-KYC",
+      "responseLatencyHours": 2,
+      "registeredFiu": true,
+      "contactEmail": "nodal@coindcx.com",
+      "subpoenaFormat": "Section 91 / 102 CrPC Formal Directive",
+      "cooperationLevel": "HIGH",
+      "avgFreezeTimeHours": 3,
+      "knownAddresses": {
+        "ethereum": [
+          "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b"
+        ],
+        "polygon": [
+          "0x456c606298d514db089934071355e5743bf21d45"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-wazirx",
+      "name": "WazirX (Zanmai Labs)",
+      "legalEntity": "Zanmai Labs Pvt Ltd / Zettai Pte Ltd",
+      "category": "CENTRALIZED_EXCHANGE",
+      "jurisdiction": "India (FIU-IND) / Singapore",
+      "complianceRating": "B (Subject to Legal Advisory Review)",
+      "kycStandard": "Indian Statutory KYC (PAN + Video)",
+      "responseLatencyHours": 6,
+      "registeredFiu": true,
+      "contactEmail": "nodal@wazirx.com",
+      "subpoenaFormat": "Section 91 CrPC Notice",
+      "cooperationLevel": "MEDIUM",
+      "avgFreezeTimeHours": 12,
+      "knownAddresses": {
+        "ethereum": [
+          "0x5041ed759dd4afc3a72b8192c143f72f4724081a"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    },
+    {
+      "id": "vasp-tornado",
+      "name": "Tornado Cash (OFAC Sanctioned)",
+      "legalEntity": "Decentralized Smart Contract Mixer",
+      "category": "MIXER_PRIVACY",
+      "jurisdiction": "Decentralized / OFAC SDN List (August 2022)",
+      "complianceRating": "F (Non-Compliant / Sanctioned)",
+      "kycStandard": "None (Zero-Knowledge Mixer)",
+      "responseLatencyHours": 999,
+      "registeredFiu": false,
+      "contactEmail": "none@tornado.cash",
+      "subpoenaFormat": "Direct On-Chain Asset Blacklist",
+      "cooperationLevel": "NON_COOPERATIVE",
+      "avgFreezeTimeHours": 0,
+      "knownAddresses": {
+        "ethereum": [
+          "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b",
+          "0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936",
+          "0x910cbd523d972eb0a6f4cae4618ad62622b39dbf",
+          "0xa160cdab225685da1d56aa342ad8841c3b53f291"
+        ]
+      },
+      "createdAt": "2026-09-26T18:43:57.340Z"
+    }
+  ],
+  "vaspAddresses": [],
+  "bridges": [
+    {
+      "id": "br-stargate",
+      "name": "Stargate Finance",
+      "protocol": "LayerZero Omnichain",
+      "supportedChains": [
+        "ethereum",
+        "polygon",
+        "bsc",
+        "arbitrum",
+        "optimism",
+        "avalanche"
+      ],
+      "contractAddresses": {
+        "ethereum": "0x8731d54E9D02c286767d56ac03e8037C07e01e98",
+        "polygon": "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd",
+        "avalanche": "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd"
+      }
+    },
+    {
+      "id": "br-hop",
+      "name": "Hop Protocol",
+      "protocol": "Hop Bridge Router",
+      "supportedChains": [
+        "ethereum",
+        "polygon",
+        "arbitrum",
+        "optimism"
+      ],
+      "contractAddresses": {
+        "ethereum": "0x3666f603Cc164936C1b87e207F36BEBa4AC5f18a"
+      }
+    },
+    {
+      "id": "br-portal",
+      "name": "Portal Bridge (Wormhole)",
+      "protocol": "Wormhole Core",
+      "supportedChains": [
+        "ethereum",
+        "solana",
+        "polygon",
+        "bsc",
+        "avalanche"
+      ],
+      "contractAddresses": {
+        "ethereum": "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
+        "solana": "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth"
+      }
+    }
+  ],
+  "dexes": [
+    {
+      "id": "dex-uniswap-v3",
+      "name": "Uniswap V3 SwapRouter",
+      "protocol": "Uniswap",
+      "chain": "ethereum",
+      "routerAddress": "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+    },
+    {
+      "id": "dex-uniswap-universal",
+      "name": "Uniswap Universal Router",
+      "protocol": "Uniswap",
+      "chain": "ethereum",
+      "routerAddress": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+    },
+    {
+      "id": "dex-pancakeswap-v2",
+      "name": "PancakeSwap V2 Router",
+      "protocol": "PancakeSwap",
+      "chain": "bsc",
+      "routerAddress": "0x10ED43C718714eb63d5aA57B78B54704E256024E"
+    },
+    {
+      "id": "dex-sunswap",
+      "name": "SunSwap V2 Router",
+      "protocol": "SunSwap",
+      "chain": "tron",
+      "routerAddress": "TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax"
+    }
+  ],
+  "mixers": [
+    {
+      "id": "mx-tornado",
+      "name": "Tornado Cash",
+      "chain": "ethereum",
+      "sanctioned": true,
+      "sanctionSource": "OFAC SDN List",
+      "addresses": [
+        "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b",
+        "0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936",
+        "0x910cbd523d972eb0a6f4cae4618ad62622b39dbf",
+        "0xa160cdab225685da1d56aa342ad8841c3b53f291"
+      ],
+      "depositDenominations": [
+        "0.1 ETH",
+        "1 ETH",
+        "10 ETH",
+        "100 ETH"
+      ]
+    }
+  ],
+  "riskAssessments": [],
+  "riskSignals": [],
+  "alerts": [
+    {
+      "id": "alt-1790448360009-258",
+      "type": "RAPID_SWEEP_DETECTED",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "message": "Watchtower Alert: Outgoing sweep of 124.5000 TRX ($0) detected on TRON",
+      "caseId": "TC-2025-0792",
+      "walletAddress": "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+      "chain": "tron",
+      "amount": 124.5,
+      "asset": "TRX",
+      "riskScore": 15,
+      "acknowledged": false,
+      "createdAt": "2026-09-26T18:46:00.009Z"
+    },
+    {
+      "id": "alt-1790448360007-903",
+      "type": "RAPID_SWEEP_DETECTED",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "message": "Watchtower Alert: Outgoing sweep of 0.0500 ETH ($0) detected on ETHEREUM",
+      "caseId": "TC-2025-0841",
+      "walletAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "amount": 0.05,
+      "asset": "ETH",
+      "riskScore": 15,
+      "acknowledged": false,
+      "createdAt": "2026-09-26T18:46:00.007Z"
+    },
+    {
+      "id": "alt-1",
+      "type": "LARGE_SWEEP_DETECTED",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "message": "Unusual transfer of 45,000 USDT into unverified high-risk transit node",
+      "caseId": "TC-2025-0841",
+      "walletAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "amount": 45000,
+      "asset": "USDT",
+      "vasp": "OKX Exchange",
+      "riskScore": 94,
+      "acknowledged": false,
+      "createdAt": "2026-09-26T18:08:57.340Z"
+    },
+    {
+      "id": "alt-2",
+      "type": "VASP_DEPOSIT_MATCH",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "message": "Target wallet funds detected entering Binance TRC-20 deposit gateway",
+      "caseId": "TC-2025-0792",
+      "walletAddress": "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+      "chain": "tron",
+      "amount": 46500,
+      "asset": "USDT",
+      "vasp": "Binance Global",
+      "riskScore": 97,
+      "acknowledged": false,
+      "createdAt": "2026-09-26T16:43:57.340Z"
+    },
+    {
+      "id": "alt-3",
+      "type": "PEEL_CHAIN_CONSOLIDATION",
+      "severity": "MEDIUM",
+      "status": "ACKNOWLEDGED",
+      "message": "0.85 BTC output change split detected during ransom hop analysis",
+      "caseId": "TC-2025-0619",
+      "walletAddress": "bc1qa5wkgaew2dkv56kfvj49j0av5nqvrl529w46dn",
+      "chain": "bitcoin",
+      "amount": 0.85,
+      "asset": "BTC",
+      "riskScore": 89,
+      "acknowledged": true,
+      "acknowledgedBy": "Inspector Vikram Mehta",
+      "acknowledgedAt": "2026-09-26T14:43:57.340Z",
+      "createdAt": "2026-09-26T10:43:57.340Z"
+    }
+  ],
+  "watchlist": [
+    {
+      "id": "w-1",
+      "address": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "label": "Sha Zhu Pan Transit Burner",
+      "riskBand": "LOW",
+      "riskScore": 15,
+      "status": "ALERTING",
+      "caseId": "TC-2025-0841",
+      "lastActive": "2026-09-26T16:43:57.340Z",
+      "balanceNative": 0,
+      "balanceUsd": 0,
+      "ticker": "ETH",
+      "lastCheckedAt": "2026-09-26T18:48:30.011Z",
+      "addedAt": "2026-09-25T06:43:57.340Z",
+      "notes": "Suspect wallet identified in dating app fraud complaint"
+    },
+    {
+      "id": "w-2",
+      "address": "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+      "chain": "tron",
+      "label": "Telegram Task Scam Hub",
+      "riskBand": "LOW",
+      "riskScore": 15,
+      "status": "ACTIVE",
+      "caseId": "TC-2025-0792",
+      "lastActive": "2026-09-26T14:43:57.340Z",
+      "balanceNative": 0,
+      "balanceUsd": 0,
+      "ticker": "TRX",
+      "lastCheckedAt": "2026-09-26T18:48:30.012Z",
+      "addedAt": "2026-09-24T18:43:57.340Z",
+      "notes": "High-frequency TRC-20 USDT aggregator"
+    },
+    {
+      "id": "w-3",
+      "address": "bc1qa5wkgaew2dkv56kfvj49j0av5nqvrl529w46dn",
+      "chain": "bitcoin",
+      "label": "LockBit Hospital Extortion Destination",
+      "riskBand": "HIGH",
+      "riskScore": 89,
+      "status": "MONITORING",
+      "caseId": "TC-2025-0619",
+      "lastActive": "2026-09-26T06:43:57.340Z",
+      "balanceNative": 4.35,
+      "balanceUsd": 285000,
+      "ticker": "BTC",
+      "lastCheckedAt": "2026-09-26T18:43:57.340Z",
+      "addedAt": "2026-09-23T18:43:57.340Z",
+      "notes": "Active peel chain under watch"
+    }
+  ],
+  "evidenceRecords": [
+    {
+      "id": "ev-intake-TC-2025-0841",
+      "caseId": "TC-2025-0841",
+      "sequenceIndex": 0,
+      "timestamp": "2026-09-25T06:43:57.340Z",
+      "actor": "TraceChain Automated Intake Engine",
+      "title": "Intake Target Record: 0x71c0429f... (ETH)",
+      "type": "COMPLAINT_INTAKE",
+      "payload": {
+        "caseId": "TC-2025-0841",
+        "targetAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "chain": "ethereum",
+        "complaintRef": "NCRP-2025-MH-94821",
+        "victimName": "Rohan Kapoor"
+      },
+      "canonicalPayload": "{\"caseId\":\"TC-2025-0841\",\"chain\":\"ethereum\",\"complaintRef\":\"NCRP-2025-MH-94821\",\"targetAddress\":\"0x71c0429f939e0807b1d1bc65860d5b77ecb2a601\",\"victimName\":\"Rohan Kapoor\"}",
+      "payloadHash": "a13c7100286dda720aae37c8efa30491711152742e7464444b0d2e2424f21ed6",
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5"
+    },
+    {
+      "id": "ev-rpc-TC-2025-0841",
+      "caseId": "TC-2025-0841",
+      "sequenceIndex": 1,
+      "timestamp": "2026-09-25T07:43:57.341Z",
+      "actor": "Native JSON-RPC Subsystem",
+      "title": "Live Blockchain Verification: Ethereum Mainnet Node",
+      "type": "ON_CHAIN_PROBE",
+      "payload": {
+        "caseId": "TC-2025-0841",
+        "provider": "Ethereum Mainnet JSON-RPC",
+        "blockHeight": 21890432,
+        "txCount": 14,
+        "balance": "0.05 ETH"
+      },
+      "canonicalPayload": "{\"balance\":\"0.05 ETH\",\"blockHeight\":21890432,\"caseId\":\"TC-2025-0841\",\"provider\":\"Ethereum Mainnet JSON-RPC\",\"txCount\":14}",
+      "payloadHash": "1ca33f756109d76487741b6615019dab58eb37b968dbcd671a5669fa6bb305f5",
+      "previousHash": "911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5",
+      "recordHash": "8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6"
+    },
+    {
+      "id": "ev-forensics-TC-2025-0841",
+      "caseId": "TC-2025-0841",
+      "sequenceIndex": 2,
+      "timestamp": "2026-09-25T08:43:57.341Z",
+      "actor": "TraceChain Pattern & Heuristic Engine",
+      "title": "Forensic Pattern & Risk Ledger (Score: 94)",
+      "type": "FORENSIC_EVALUATION",
+      "payload": {
+        "caseId": "TC-2025-0841",
+        "riskScore": 94,
+        "detectedPatterns": [
+          "LAYERING_DISPERSAL",
+          "HIGH_VELOCITY_PASSTHROUGH"
+        ],
+        "threatCategory": "High Velocity Layering Transit Sink"
+      },
+      "canonicalPayload": "{\"caseId\":\"TC-2025-0841\",\"detectedPatterns\":[\"LAYERING_DISPERSAL\",\"HIGH_VELOCITY_PASSTHROUGH\"],\"riskScore\":94,\"threatCategory\":\"High Velocity Layering Transit Sink\"}",
+      "payloadHash": "5afd21c60aa85a523a935255d2c90cbd582b996459bb988c52fd3e7302284e5d",
+      "previousHash": "8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6",
+      "recordHash": "07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43"
+    },
+    {
+      "id": "ev-vasp-TC-2025-0841",
+      "caseId": "TC-2025-0841",
+      "sequenceIndex": 3,
+      "timestamp": "2026-09-25T12:43:57.341Z",
+      "actor": "Authoritative VASP Directory Subsystem",
+      "title": "VASP Legal Attribution Record (OKX Exchange)",
+      "type": "VASP_IDENTIFICATION",
+      "payload": {
+        "caseId": "TC-2025-0841",
+        "vasp": "OKX Exchange",
+        "clusterAddress": "0x6cC5F688a30d379E122c5992b855295cf643bd69",
+        "hopDistance": 2,
+        "confidence": 0.91,
+        "subpoenaContact": "law-enforcement@okx.com"
+      },
+      "canonicalPayload": "{\"caseId\":\"TC-2025-0841\",\"clusterAddress\":\"0x6cC5F688a30d379E122c5992b855295cf643bd69\",\"confidence\":0.91,\"hopDistance\":2,\"subpoenaContact\":\"law-enforcement@okx.com\",\"vasp\":\"OKX Exchange\"}",
+      "payloadHash": "95879e5b079f369f5ebdd24d00471e4f1ddc133dacb944fa42c904c498f9d7ac",
+      "previousHash": "07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43",
+      "recordHash": "d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d"
+    },
+    {
+      "id": "ev-TC-PROBE-1-muiqpn8m",
+      "caseId": "TC-PROBE",
+      "sequenceIndex": 0,
+      "timestamp": "2026-09-26T18:45:37.893Z",
+      "actor": "Inspector Vikram Mehta",
+      "title": "Multi-Hop Recursive Trace Graph (0 Hops Resolved)",
+      "type": "FORENSIC_EVALUATION",
+      "payload": {
+        "investigationId": "inv-TC-PROBE-muiqpl9p",
+        "rootAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "chain": "ethereum",
+        "maxDepthReached": 0,
+        "totalHops": 0,
+        "nodesCount": 1,
+        "terminalVasp": "None",
+        "bridgesDetected": []
+      },
+      "canonicalPayload": "{\"bridgesDetected\":[],\"chain\":\"ethereum\",\"investigationId\":\"inv-TC-PROBE-muiqpl9p\",\"maxDepthReached\":0,\"nodesCount\":1,\"rootAddress\":\"0x71c0429f939e0807b1d1bc65860d5b77ecb2a601\",\"terminalVasp\":\"None\",\"totalHops\":0}",
+      "payloadHash": "9454bab9c2497d906e1eadf8e425669cbdb868f61c1877e3acad97cb7555d790",
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "0b5518eda99fdd61d82842529c5a176ddf6a4ec6ede01804c43499097f7a7823"
+    },
+    {
+      "id": "ev-TC-2026-8408-1-muiqq50d",
+      "caseId": "TC-2026-8408",
+      "sequenceIndex": 0,
+      "timestamp": "2026-09-26T18:46:00.925Z",
+      "actor": "Inspector Vikram Mehta",
+      "title": "Complaint Intake Attestation: NCRP-2026-09-DL-0091823",
+      "type": "COMPLAINT_INTAKE",
+      "payload": {
+        "caseId": "TC-2026-8408",
+        "complaintRef": "NCRP-2026-09-DL-0091823",
+        "reportedWallet": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "chain": "ethereum",
+        "reportedLossUsd": 15000,
+        "typology": "TASK_SCAM",
+        "extractedWallets": []
+      },
+      "canonicalPayload": "{\"caseId\":\"TC-2026-8408\",\"chain\":\"ethereum\",\"complaintRef\":\"NCRP-2026-09-DL-0091823\",\"extractedWallets\":[],\"reportedLossUsd\":15000,\"reportedWallet\":\"0x71c0429f939e0807b1d1bc65860d5b77ecb2a601\",\"typology\":\"TASK_SCAM\"}",
+      "payloadHash": "afdeb50a3c78dfcd32c7fd0896a5d77fe495decfbb99929c1096ede5546604e0",
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "6e9b072472259255c4cb9c43f43fca93071f401ca8f4d4b7e6c6077616fc9c72"
+    },
+    {
+      "id": "ev-TC-TEST-1790448517776-1-muiqti1f",
+      "caseId": "TC-TEST-1790448517776",
+      "sequenceIndex": 0,
+      "timestamp": "2026-09-26T18:48:37.779Z",
+      "actor": "Test Investigator",
+      "title": "Intake Block 1",
+      "type": "COMPLAINT_INTAKE",
+      "payload": {
+        "amount": 10000,
+        "currency": "USDT"
+      },
+      "canonicalPayload": "{\"amount\":10000,\"currency\":\"USDT\"}",
+      "payloadHash": "47d293b0c9ba9d323ee3f10ead48a32e75d0f14cb970aae4828c04db25d20d2e",
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "5482c191d284648a987e9cb0c06990965cae9749a650571b270943ce3efea4b0"
+    },
+    {
+      "id": "ev-TC-TEST-1790448517776-2-muiqti1f",
+      "caseId": "TC-TEST-1790448517776",
+      "sequenceIndex": 1,
+      "timestamp": "2026-09-26T18:48:37.779Z",
+      "actor": "Test Node",
+      "title": "Probe Block 2",
+      "type": "ON_CHAIN_PROBE",
+      "payload": {
+        "block": 19000000,
+        "txCount": 5
+      },
+      "canonicalPayload": "{\"block\":19000000,\"txCount\":5}",
+      "payloadHash": "fc2c421bcfd2dc60e1389af97eaeacf2572d7f1ff489421028b6d9e67ab4995e",
+      "previousHash": "5482c191d284648a987e9cb0c06990965cae9749a650571b270943ce3efea4b0",
+      "recordHash": "5aa250b7ba7d50bdc76e1d368cdfe20c6732694c4f81ff52d9318d01732a611f"
+    },
+    {
+      "id": "ev-TC-TEST-1790448517776-3-muiqti1f",
+      "caseId": "TC-TEST-1790448517776",
+      "sequenceIndex": 2,
+      "timestamp": "2026-09-26T18:48:37.779Z",
+      "actor": "Test Subsystem",
+      "title": "VASP Block 3",
+      "type": "VASP_IDENTIFICATION",
+      "payload": {
+        "vasp": "Binance Global"
+      },
+      "canonicalPayload": "{\"vasp\":\"Binance Global\"}",
+      "payloadHash": "b2270866c49340018593fe9b2d52c6ace37bfee0409904bb192c1f5947563b82",
+      "previousHash": "5aa250b7ba7d50bdc76e1d368cdfe20c6732694c4f81ff52d9318d01732a611f",
+      "recordHash": "9c50befb601addd29f89e74a31b4b0e74dae6fc69e6910e881789dd90dba5bf5"
+    },
+    {
+      "id": "ev-TC-TAMPER-1790448517779-1-muiqti1f",
+      "caseId": "TC-TAMPER-1790448517779",
+      "sequenceIndex": 0,
+      "timestamp": "2026-09-26T18:48:37.779Z",
+      "actor": "Test Investigator",
+      "title": "Block 1",
+      "type": "COMPLAINT_INTAKE",
+      "payload": {
+        "loss": 999999999
+      },
+      "canonicalPayload": "{\"loss\":5000}",
+      "payloadHash": "c85a8adc974536eebbe153594a1920987a843088a0952018fb44e75467340eec",
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "recordHash": "be3ebf5d28f29ed5f9584a4de48b631062d05edd56f4d7995ebce0504bad00f0"
+    },
+    {
+      "id": "ev-TC-TAMPER-1790448517779-2-muiqti1g",
+      "caseId": "TC-TAMPER-1790448517779",
+      "sequenceIndex": 1,
+      "timestamp": "2026-09-26T18:48:37.780Z",
+      "actor": "Test Node",
+      "title": "Block 2",
+      "type": "ON_CHAIN_PROBE",
+      "payload": {
+        "loss": 5000
+      },
+      "canonicalPayload": "{\"loss\":5000}",
+      "payloadHash": "c85a8adc974536eebbe153594a1920987a843088a0952018fb44e75467340eec",
+      "previousHash": "be3ebf5d28f29ed5f9584a4de48b631062d05edd56f4d7995ebce0504bad00f0",
+      "recordHash": "59a08abd9f9566bba2a96312ad1dedbd28ced3b6b31d6c38da04111759797a86"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "aud-1790448360925-4051",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "NCRP_COMPLAINT_INGESTED",
+      "resource": "NCRP_INTEGRATION",
+      "resourceId": "2026/09/DL/0091823",
+      "metadata": {
+        "caseId": "TC-2026-8408",
+        "lossAmount": 50000
+      },
+      "timestamp": "2026-09-26T18:46:00.925Z"
+    },
+    {
+      "id": "aud-1790448360925-7993",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "CASE_CREATED",
+      "resource": "CASE",
+      "resourceId": "TC-2026-8408",
+      "metadata": {
+        "complaintRef": "NCRP-2026-09-DL-0091823",
+        "primaryWallet": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "primaryChain": "ethereum"
+      },
+      "timestamp": "2026-09-26T18:46:00.925Z"
+    },
+    {
+      "id": "aud-1790448360009-7103",
+      "actor": "Watchtower Background Daemon",
+      "actorRole": "ADMIN",
+      "action": "WATCHLIST_MODIFIED",
+      "resource": "ALERT",
+      "resourceId": "TQ41vQxX9bW9pLz7Y2N1jK6mM4vR8eT3sA",
+      "metadata": {
+        "chain": "tron",
+        "delta": 124.5,
+        "currentBalance": 0,
+        "previousBalance": 124.5
+      },
+      "timestamp": "2026-09-26T18:46:00.009Z"
+    },
+    {
+      "id": "aud-1790448360007-6352",
+      "actor": "Watchtower Background Daemon",
+      "actorRole": "ADMIN",
+      "action": "WATCHLIST_MODIFIED",
+      "resource": "ALERT",
+      "resourceId": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "metadata": {
+        "chain": "ethereum",
+        "delta": 0.05,
+        "currentBalance": 0,
+        "previousBalance": 0.05
+      },
+      "timestamp": "2026-09-26T18:46:00.007Z"
+    },
+    {
+      "id": "aud-1790448349544-400",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "ACTION_PACKET_GENERATED",
+      "resource": "ACTION_PACKET",
+      "resourceId": "actpk-TC-2025-0841-muiqpw88",
+      "metadata": {
+        "caseId": "TC-2025-0841",
+        "recipientVasp": "Binance Legal Compliance Desk"
+      },
+      "timestamp": "2026-09-26T18:45:49.544Z"
+    },
+    {
+      "id": "aud-1790448344234-7906",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "REPORT_GENERATED",
+      "resource": "REPORT",
+      "resourceId": "rep-TC-2025-0841-muiqps4q",
+      "metadata": {
+        "caseId": "TC-2025-0841"
+      },
+      "timestamp": "2026-09-26T18:45:44.234Z"
+    },
+    {
+      "id": "aud-1790448337894-1979",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "ANALYST",
+      "action": "TRACE_STARTED",
+      "resource": "RECURSIVE_TRACE",
+      "resourceId": "inv-TC-PROBE-muiqpl9p",
+      "metadata": {
+        "rootAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+        "chain": "ethereum",
+        "maxDepth": 2,
+        "discoveredNodes": 1
+      },
+      "timestamp": "2026-09-26T18:45:37.894Z"
+    },
+    {
+      "id": "aud-1",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "LOGIN",
+      "resource": "SYSTEM_AUTH",
+      "resourceId": "usr-1",
+      "timestamp": "2026-09-25T05:43:57.341Z"
+    },
+    {
+      "id": "aud-2",
+      "actor": "System Intake",
+      "actorRole": "INVESTIGATOR",
+      "action": "CASE_CREATED",
+      "resource": "CASE",
+      "resourceId": "TC-2025-0841",
+      "timestamp": "2026-09-25T06:43:57.340Z"
+    },
+    {
+      "id": "aud-3",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "TRACE_STARTED",
+      "resource": "INVESTIGATION",
+      "resourceId": "TC-2025-0841",
+      "timestamp": "2026-09-25T07:43:57.341Z"
+    },
+    {
+      "id": "aud-4",
+      "actor": "Inspector Vikram Mehta",
+      "actorRole": "INVESTIGATOR",
+      "action": "EVIDENCE_VERIFIED",
+      "resource": "EVIDENCE_CHAIN",
+      "resourceId": "TC-2025-0841",
+      "timestamp": "2026-09-26T16:43:57.341Z"
+    }
+  ],
+  "aiAnalyses": [],
+  "reports": [
+    {
+      "id": "rep-TC-2025-0841-muiqps4q",
+      "caseId": "TC-2025-0841",
+      "title": "Forensic Report: Sha Zhu Pan (Pig Butchering) -> OKX Hot Deposit Gateway",
+      "investigator": "Inspector Vikram Mehta",
+      "agency": "Delhi Police Cyber Cell / NCRP Desk",
+      "generatedAt": "2026-09-26T18:45:44.229Z",
+      "contentMarkdown": "# TRACECHAIN FORENSIC INTELLIGENCE DOSSIER\n**OFFICIAL LAW ENFORCEMENT INVESTIGATION REPORT**\n*Generated under Statutory Mandate for Cryptographic Electronic Records*\n\n---\n\n## 1. CASE IDENTIFICATION\n- **Dossier Reference:** TC-2025-0841\n- **Complaint Reference:** NCRP-2025-MH-94821\n- **Investigating Agency:** Delhi Police Cyber Cell / NCRP Desk\n- **Primary Investigator:** Inspector Vikram Mehta\n- **Date of Generation:** Sat, 26 Sep 2026 18:45:44 GMT\n- **Current Case Status:** VASP_IDENTIFIED\n- **Forensic Typology:** PIG BUTCHERING\n\n## 2. VICTIM & INTAKE COMPLAINT SUMMARY\n- **Complainant Name:** Rohan Kapoor\n- **Complainant Contact:** rohan.k@gmail.com\n- **Reported Loss:** $142,500 USD\n- **Forensically Traceable Volume:** $138,200 USD\n- **Recovery Feasibility Probability:** 88%\n- **Original Complaint Extract:**\n> \"Victim was contacted via dating application and convinced to invest savings into a high-yield decentralized arbitrage pool. Initial withdrawal succeeded, following which a major deposit of 142,500 USDT was stolen and swept into mixer/burners.\"\n\n## 3. PRIMARY TARGET ON-CHAIN SPECIFICATION\n- **Target Suspect Address:** `0x71c0429f939e0807b1d1bc65860d5b77ecb2a601`\n- **Blockchain Network:** ETHEREUM\n- **Live On-Chain Balance:** 0.00 ETH ETH ($0 USD)\n- **Total Historical Transactions:** 3\n- **Target Classification:** Externally Owned Account (EOA)\n- **Identified Counterparty Wallets:** 0x71c0429f939e0807b1d1bc65860d5b77ecb2a601, 0x892a019483012984029482049280492840928402, 0x6cc5f688a315f3dc28a7781717a9a798a59fda7b\n\n## 4. DETERMINISTIC RISK SCORING & FRAUD SIGNALS\n- **Composite Threat Risk Score:** 94 / 100 (CRITICAL)\n- **Priority Urgency Index:** 91 / 100\n- **Contributing Heuristic Indicators:**\n\n\n## 5. VASP & EXCHANGE ATTRIBUTION INTELLIGENCE\n- **Attributed VASP Entity:** **OKX Exchange**\n- **Attribution Status:** UNKNOWN\n- **Confidence Rating:** 88%\n- **Subpoena Submission Protocol:** Official Law Enforcement Portal\n- **Legal Compliance Liaison Contact:** `law-enforcement@exchange.com`\n- **Evidentiary Basis:** No verified VASP association or cluster match identified in authoritative blockchain transaction records.\n\n## 6. STATUTORY EVIDENCE TAMPER-EVIDENT INTEGRITY LEDGER\n*Validated under Section 65B of Indian Evidence Act / BSA 2023 & Fed. R. Evid. 902(13)*\n- **Cryptographic Chain Validation Status:** **AUTHENTIC & UNMODIFIED (VERIFIED)**\n- **Total Sequenced Evidence Blocks:** 4\n- **Genesis Proof Anchor:** `0000000000000000000000000000000000000000000000000000000000000000`\n- **Root Merkle-Chain Fingerprint:** `d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d`\n- **Tampered / Corrupted Blocks Detected:** 0\n\n### Sealed Evidence Chain Blocks:\n\n#### Block #0 — Intake Target Record: 0x71c0429f... (ETH)\n- **Block ID:** `ev-intake-TC-2025-0841`\n- **Timestamp:** 2026-09-25T06:43:57.340Z\n- **Recorded By:** TraceChain Automated Intake Engine\n- **Payload Hash (SHA-256):** `a13c7100286dda720aae37c8efa30491711152742e7464444b0d2e2424f21ed6`\n- **Previous Block Hash:** `0000000000000000000000000000000000000000000000000000000000000000`\n- **Sealed Record Hash:** `911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5`\n\n\n#### Block #1 — Live Blockchain Verification: Ethereum Mainnet Node\n- **Block ID:** `ev-rpc-TC-2025-0841`\n- **Timestamp:** 2026-09-25T07:43:57.341Z\n- **Recorded By:** Native JSON-RPC Subsystem\n- **Payload Hash (SHA-256):** `1ca33f756109d76487741b6615019dab58eb37b968dbcd671a5669fa6bb305f5`\n- **Previous Block Hash:** `911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5`\n- **Sealed Record Hash:** `8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6`\n\n\n#### Block #2 — Forensic Pattern & Risk Ledger (Score: 94)\n- **Block ID:** `ev-forensics-TC-2025-0841`\n- **Timestamp:** 2026-09-25T08:43:57.341Z\n- **Recorded By:** TraceChain Pattern & Heuristic Engine\n- **Payload Hash (SHA-256):** `5afd21c60aa85a523a935255d2c90cbd582b996459bb988c52fd3e7302284e5d`\n- **Previous Block Hash:** `8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6`\n- **Sealed Record Hash:** `07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43`\n\n\n#### Block #3 — VASP Legal Attribution Record (OKX Exchange)\n- **Block ID:** `ev-vasp-TC-2025-0841`\n- **Timestamp:** 2026-09-25T12:43:57.341Z\n- **Recorded By:** Authoritative VASP Directory Subsystem\n- **Payload Hash (SHA-256):** `95879e5b079f369f5ebdd24d00471e4f1ddc133dacb944fa42c904c498f9d7ac`\n- **Previous Block Hash:** `07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43`\n- **Sealed Record Hash:** `d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d`\n\n\n## 7. RECOMMENDED STATUTORY & EXECUTIVE ACTIONS\n1. **Immediate Section 91 / 102 CrPC Preservation Demand:** Serve formal statutory freeze notice to **OKX Exchange**.\n2. **Account UID & Identity Disclosure:** Compel production of full KYC, national ID records, bank accounts, and IP address connection logs.\n3. **Automated Watchtower Monitoring:** Maintain 24/7 on-chain alerting for secondary sweeps into cross-chain bridges or mixers.\n\n---\n**CERTIFICATION OF AUTHENTICITY**\nI hereby certify that this electronic forensic record was automatically generated from public, immutable blockchain consensus records and evaluated via verified deterministic heuristics.\n\n**Officer:** Inspector Vikram Mehta  \n**Agency:** Delhi Police Cyber Cell / NCRP Desk  \n**Timestamp:** 2026-09-26T18:45:44.229Z\n",
+      "contentHtml": "\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\"/>\n  <title>TraceChain Dossier TC-2025-0841</title>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; }\n    h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 24px; }\n    h2 { color: #1e293b; margin-top: 30px; font-size: 18px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }\n    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; background: #e0f2fe; color: #0369a1; }\n    .verified { background: #dcfce7; color: #15803d; }\n    pre, code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }\n    .block { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin: 10px 0; background: #f8fafc; font-size: 13px; }\n  </style>\n</head>\n<body>\n  <h1>TRACECHAIN FORENSIC INTELLIGENCE DOSSIER</h1>**OFFICIAL LAW ENFORCEMENT INVESTIGATION REPORT**\n*Generated under Statutory Mandate for Cryptographic Electronic Records*<p></p>---<p></p>#<h1>1. CASE IDENTIFICATION</h1>- **Dossier Reference:** TC-2025-0841\n- **Complaint Reference:** NCRP-2025-MH-94821\n- **Investigating Agency:** Delhi Police Cyber Cell / NCRP Desk\n- **Primary Investigator:** Inspector Vikram Mehta\n- **Date of Generation:** Sat, 26 Sep 2026 18:45:44 GMT\n- **Current Case Status:** VASP_IDENTIFIED\n- **Forensic Typology:** PIG BUTCHERING<p></p>#<h1>2. VICTIM & INTAKE COMPLAINT SUMMARY</h1>- **Complainant Name:** Rohan Kapoor\n- **Complainant Contact:** rohan.k@gmail.com\n- **Reported Loss:** $142,500 USD\n- **Forensically Traceable Volume:** $138,200 USD\n- **Recovery Feasibility Probability:** 88%\n- **Original Complaint Extract:**\n> \"Victim was contacted via dating application and convinced to invest savings into a high-yield decentralized arbitrage pool. Initial withdrawal succeeded, following which a major deposit of 142,500 USDT was stolen and swept into mixer/burners.\"<p></p>#<h1>3. PRIMARY TARGET ON-CHAIN SPECIFICATION</h1>- **Target Suspect Address:** `0x71c0429f939e0807b1d1bc65860d5b77ecb2a601`\n- **Blockchain Network:** ETHEREUM\n- **Live On-Chain Balance:** 0.00 ETH ETH ($0 USD)\n- **Total Historical Transactions:** 3\n- **Target Classification:** Externally Owned Account (EOA)\n- **Identified Counterparty Wallets:** 0x71c0429f939e0807b1d1bc65860d5b77ecb2a601, 0x892a019483012984029482049280492840928402, 0x6cc5f688a315f3dc28a7781717a9a798a59fda7b<p></p>#<h1>4. DETERMINISTIC RISK SCORING & FRAUD SIGNALS</h1>- **Composite Threat Risk Score:** 94 / 100 (CRITICAL)\n- **Priority Urgency Index:** 91 / 100\n- **Contributing Heuristic Indicators:**<p></p>\n#<h1>5. VASP & EXCHANGE ATTRIBUTION INTELLIGENCE</h1>- **Attributed VASP Entity:** **OKX Exchange**\n- **Attribution Status:** UNKNOWN\n- **Confidence Rating:** 88%\n- **Subpoena Submission Protocol:** Official Law Enforcement Portal\n- **Legal Compliance Liaison Contact:** `law-enforcement@exchange.com`\n- **Evidentiary Basis:** No verified VASP association or cluster match identified in authoritative blockchain transaction records.<p></p>#<h1>6. STATUTORY EVIDENCE TAMPER-EVIDENT INTEGRITY LEDGER</h1>*Validated under Section 65B of Indian Evidence Act / BSA 2023 & Fed. R. Evid. 902(13)*\n- **Cryptographic Chain Validation Status:** **AUTHENTIC & UNMODIFIED (VERIFIED)**\n- **Total Sequenced Evidence Blocks:** 4\n- **Genesis Proof Anchor:** `0000000000000000000000000000000000000000000000000000000000000000`\n- **Root Merkle-Chain Fingerprint:** `d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d`\n- **Tampered / Corrupted Blocks Detected:** 0<p></p>##<h1>Sealed Evidence Chain Blocks:</h1>\n###<h1>Block #0 — Intake Target Record: 0x71c0429f... (ETH)</h1>- **Block ID:** `ev-intake-TC-2025-0841`\n- **Timestamp:** 2026-09-25T06:43:57.340Z\n- **Recorded By:** TraceChain Automated Intake Engine\n- **Payload Hash (SHA-256):** `a13c7100286dda720aae37c8efa30491711152742e7464444b0d2e2424f21ed6`\n- **Previous Block Hash:** `0000000000000000000000000000000000000000000000000000000000000000`\n- **Sealed Record Hash:** `911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5`<p></p>\n###<h1>Block #1 — Live Blockchain Verification: Ethereum Mainnet Node</h1>- **Block ID:** `ev-rpc-TC-2025-0841`\n- **Timestamp:** 2026-09-25T07:43:57.341Z\n- **Recorded By:** Native JSON-RPC Subsystem\n- **Payload Hash (SHA-256):** `1ca33f756109d76487741b6615019dab58eb37b968dbcd671a5669fa6bb305f5`\n- **Previous Block Hash:** `911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5`\n- **Sealed Record Hash:** `8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6`<p></p>\n###<h1>Block #2 — Forensic Pattern & Risk Ledger (Score: 94)</h1>- **Block ID:** `ev-forensics-TC-2025-0841`\n- **Timestamp:** 2026-09-25T08:43:57.341Z\n- **Recorded By:** TraceChain Pattern & Heuristic Engine\n- **Payload Hash (SHA-256):** `5afd21c60aa85a523a935255d2c90cbd582b996459bb988c52fd3e7302284e5d`\n- **Previous Block Hash:** `8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6`\n- **Sealed Record Hash:** `07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43`<p></p>\n###<h1>Block #3 — VASP Legal Attribution Record (OKX Exchange)</h1>- **Block ID:** `ev-vasp-TC-2025-0841`\n- **Timestamp:** 2026-09-25T12:43:57.341Z\n- **Recorded By:** Authoritative VASP Directory Subsystem\n- **Payload Hash (SHA-256):** `95879e5b079f369f5ebdd24d00471e4f1ddc133dacb944fa42c904c498f9d7ac`\n- **Previous Block Hash:** `07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43`\n- **Sealed Record Hash:** `d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d`<p></p>\n#<h1>7. RECOMMENDED STATUTORY & EXECUTIVE ACTIONS</h1>1. **Immediate Section 91 / 102 CrPC Preservation Demand:** Serve formal statutory freeze notice to **OKX Exchange**.\n2. **Account UID & Identity Disclosure:** Compel production of full KYC, national ID records, bank accounts, and IP address connection logs.\n3. **Automated Watchtower Monitoring:** Maintain 24/7 on-chain alerting for secondary sweeps into cross-chain bridges or mixers.<p></p>---\n**CERTIFICATION OF AUTHENTICITY**\nI hereby certify that this electronic forensic record was automatically generated from public, immutable blockchain consensus records and evaluated via verified deterministic heuristics.<p></p>**Officer:** Inspector Vikram Mehta  \n**Agency:** Delhi Police Cyber Cell / NCRP Desk  \n**Timestamp:** 2026-09-26T18:45:44.229Z\n\n</body>\n</html>\n",
+      "evidenceRootHash": "d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d",
+      "isTamperEvidentVerified": true
+    }
+  ],
+  "actionPackets": [
+    {
+      "id": "actpk-TC-2025-0841-muiqpw88",
+      "caseId": "TC-2025-0841",
+      "recipientVasp": "Binance Legal Compliance Desk",
+      "targetAddress": "0x71c0429f939e0807b1d1bc65860d5b77ecb2a601",
+      "chain": "ethereum",
+      "jurisdiction": "CYBER_CELL",
+      "issuingOfficer": "Inspector Vikram Mehta",
+      "statutoryBasis": "Section 91 & Section 102, Code of Criminal Procedure, 1973 (CrPC) / Bharatiya Nagarik Suraksha Sanhita (BNSS)",
+      "noticeText": "FORMAL STATUTORY PRESERVATION & EMERGENCY ASSET FREEZE DIRECTIVE\nISSUED UNDER THE AUTHORITY OF CRIMINAL PROCEDURE AND FINANCIAL INTELLIGENCE STATUTES\n\nTO: Legal Compliance, Global Law Enforcement Liaison Desk, Binance Legal Compliance Desk\nFROM: Inspector Vikram Mehta\nSTATUTORY BASIS: Section 91 & Section 102, Code of Criminal Procedure, 1973 (CrPC) / Bharatiya Nagarik Suraksha Sanhita (BNSS)\nDATE OF ISSUANCE: Sat, 26 Sep 2026 18:45:49 GMT\nCASE IDENTIFIER: TC-2025-0841\nPOLICE COMPLAINT (FIR) REF: NCRP-2025-MH-94821\n\n1. MANDATORY SUMMARY & URGENT DIRECTIVE\nYou are formally notified that through real-time cryptographic blockchain forensic analysis, the following custodial wallet/sub-account address operated on your exchange has been identified as the recipient of stolen criminal proceeds:\n\n• TARGET DEPOSIT ADDRESS: 0x71c0429f939e0807b1d1bc65860d5b77ecb2a601\n• BLOCKCHAIN NETWORK: ETHEREUM\n• TOTAL FRAUDULENT INFLOW VOLUME: $138,200 USD\n• FRAUD TYPOLOGY: PIG BUTCHERING\n• RECOVERY PROBABILITY: 88%\n\n2. DEMANDS FOR IMMEDIATE ACTION\nPursuant to international mutual legal assistance and the statutory powers cited above, you are hereby COMMANDED to:\na) IMMEDIATELY FREEZE AND SUSPEND all withdrawal capabilities, spot trading, P2P transactions, and external transfers linked to the deposit address above and any associated User ID (UID).\nb) PRESERVE IN AN UN-TAMPERED STATE all Know-Your-Customer (KYC) records, national identity documents, verified phone numbers, registered bank accounts, and IPv4/IPv6 login audit logs.\nc) DO NOT NOTIFY THE ACCOUNT HOLDER if such notification could lead to the dissipation of criminal assets or tipping off co-conspirators.\nd) Provide confirmation of asset hold within 4 hours of receipt to the contact credentials below.\n\n3. FORENSIC EVIDENCE & CRYPTOGRAPHIC VERIFICATION\nThis directive is certified by the TraceChain Autonomous Blockchain Intelligence Node.\n• Evidence Ledger Verification Status: AUTHENTIC & CRYPTOGRAPHICALLY SEALED (VERIFIED)\n• SHA-256 Root Merkle Fingerprint: d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d\n• Evidence Block Reference Count: 4\n\nISSUING OFFICER: Inspector Vikram Mehta\nLEGAL DESK: le-compliance@tracechain.gov.in / emergency-desk@cyberpolice.gov.in\n",
+      "evidenceHashes": [
+        "911782e0a043445ac2b1ea9e0055fcea5baca135b6590e771bb42dddc31cdae5",
+        "8684607f4b5f3d10d7db418165ba248fbffce9020c9da3189535cac2dc559ba6",
+        "07ba1819e1ca374a1efd2dc80f30103e32e0cd3f1097a4c8987c281b02c80e43",
+        "d09af0207fd208283dba721d68ed2880fa5357af60f440cc1d236d88285a952d"
+      ],
+      "generatedAt": "2026-09-26T18:45:49.544Z",
+      "status": "ISSUED"
+    }
+  ],
+  "apiIntegrations": [
+    {
+      "id": "integ-ncrp",
+      "name": "NCRP",
+      "status": "ACTIVE",
+      "endpointUrl": "https://cybercrime.gov.in/api/v2/complaints/webhook",
+      "apiKeyMasked": "ncrp_sec_live_*******7a9",
+      "lastSyncAt": "2026-09-26T18:43:57.340Z",
+      "ingestedCount": 42
+    },
+    {
+      "id": "integ-sahyog",
+      "name": "SAHYOG",
+      "status": "ACTIVE",
+      "endpointUrl": "https://sahyog.mha.gov.in/forensics/intake",
+      "apiKeyMasked": "sahyog_gov_******b82",
+      "lastSyncAt": "2026-09-26T18:43:57.340Z",
+      "ingestedCount": 18
+    }
+  ]
+}

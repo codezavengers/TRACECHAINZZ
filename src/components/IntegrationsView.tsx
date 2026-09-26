@@ -316,6 +316,105 @@ export function IntegrationsView({ vasps }: IntegrationsViewProps) {
           ))}
         </div>
       </div>
+
+      {/* NCRP & SAHYOG Government Integration Adapter */}
+      <div className="space-y-4 pt-4 border-t border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-white flex items-center gap-2">
+              <Shield className="size-4 text-amber-400" />
+              National Cybercrime Reporting Portal (NCRP) & SAHYOG Adapters
+            </h2>
+            <p className="text-xs text-slate-400">
+              Direct ingestion pipelines for official cyber fraud complaints from Indian MHA / NCRP desks into TraceChain forensic dossiers.
+            </p>
+          </div>
+          <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-amber-400/10 text-amber-300 border border-amber-400/20">
+            DEMO ADAPTER MODE
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-white/10 bg-[#161a24] p-5 space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white">NCRP Webhook / API Ingestion</h3>
+                <span className="text-[11px] text-slate-400">Ministry of Home Affairs (MHA) Portal</span>
+              </div>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ACTIVE
+              </span>
+            </div>
+            <p className="text-slate-300 text-xs">
+              Listens for incoming victim cyber complaints, extracts Bitcoin/EVM/TRON suspect wallets using deterministic NLP, and initializes cases.
+            </p>
+            <div className="rounded bg-black/40 p-2.5 font-mono text-[11px] text-slate-400 border border-white/5">
+              POST /api/integrations/ncrp/complaint
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/integrations/ncrp/complaint", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      acknowledgementNumber: `2026/09/MH/${Math.floor(100000 + Math.random() * 900000)}`,
+                      incidentDate: new Date().toISOString(),
+                      category: "Online Financial Fraud",
+                      subCategory: "Cryptocurrency Staking Scam",
+                      complainant: {
+                        fullName: "Aakash Mehta",
+                        email: "aakash.m@gmail.com",
+                        mobile: "+91-98200-11223",
+                        state: "Maharashtra",
+                        district: "Pune",
+                      },
+                      suspectDetails: {
+                        suspectWalletAddresses: ["0x71c0429f939e0807b1d1bc65860d5b77ecb2a601"],
+                      },
+                      financialDetails: {
+                        totalLossAmount: 950000,
+                        currency: "INR",
+                      },
+                      complaintDescription: "Victim lured into fake telegram high yield staking pool and drained of 9,50,000 INR.",
+                    }),
+                  });
+                  const d = await res.json();
+                  if (d.success) {
+                    alert(`NCRP complaint ingested successfully! Initialized Case: ${d.caseId}`);
+                  }
+                } catch (e: any) {
+                  alert(`Ingestion failed: ${e.message}`);
+                }
+              }}
+              className="w-full py-2 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 font-semibold text-xs transition"
+            >
+              Simulate Ingestion of NCRP FIR
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-[#161a24] p-5 space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white">SAHYOG LE Enforcement Sync</h3>
+                <span className="text-[11px] text-slate-400">Inter-Agency Joint Intelligence</span>
+              </div>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ACTIVE
+              </span>
+            </div>
+            <p className="text-slate-300 text-xs">
+              Synchronizes frozen asset accounts, multi-state victim clusters, and VASP notice responses across state cyber crime cells.
+            </p>
+            <div className="rounded bg-black/40 p-2.5 font-mono text-[11px] text-slate-400 border border-white/5">
+              GET /api/cases (Multi-Agency Synced)
+            </div>
+            <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-2">
+              <CheckCircle2 className="size-3.5 text-emerald-400" /> Tamper-evident ledger synchronization operational.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

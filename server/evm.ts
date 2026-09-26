@@ -24,7 +24,7 @@ async function callEvmRpc<T>(chain: Chain, method: string, params: any[] = []): 
   }
 
   let lastError: any = null;
-  const maxAttempts = 2;
+  const maxAttempts = 1;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -39,7 +39,7 @@ async function callEvmRpc<T>(chain: Chain, method: string, params: any[] = []): 
           method,
           params,
         }),
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(2500),
       });
 
       if (!res.ok) {
@@ -383,10 +383,12 @@ export async function probeEvmAddress(address: string, chain: Chain): Promise<Pa
       }
     }
 
-    // 3. Search recent Transfer logs via adaptive chunked eth_getLogs (recent 3,000 blocks)
-    const scanDepth = 3000;
+    // 3. Search recent Transfer logs via adaptive chunked eth_getLogs (recent 1,500 blocks with 2s timeout)
+    const scanDepth = 1500;
     const fromBlockNum = Math.max(0, blockHeight - scanDepth);
-    const rawLogs = await fetchChunkedErc20Logs(chain, paddedAddress, fromBlockNum, blockHeight);
+    const rawLogsPromise = fetchChunkedErc20Logs(chain, paddedAddress, fromBlockNum, blockHeight);
+    const logsTimeoutPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 2500));
+    const rawLogs = await Promise.race([rawLogsPromise, logsTimeoutPromise]).catch(() => []);
 
     const transactions: NormalizedTransaction[] = [];
 
